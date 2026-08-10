@@ -11,9 +11,14 @@ db.sqlite3
 # Ignore virtual environments
 venv/
 
-# Ignore static files collected by collectstatic
-static/
+# static/ is the SOURCE directory and is tracked.
+# staticfiles/ is the collectstatic output, but it stays tracked too: Vercel's
+# @vercel/python builder runs no build step, so nothing regenerates it there.
+# Run `python manage.py collectstatic` and commit the result before deploying.
 
 # Ignore IDE-specific files
 .vscode/
 .idea/
+
+# macOS junk
+.DS_Store
