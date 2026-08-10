@@ -118,7 +118,7 @@
         window.setTimeout(function () { ac.classList.remove('is-on'); }, 900);
       }
 
-      // Jittered cadence — perfectly even typing is the tell.
+      // Jittered cadence. Perfectly even typing is the tell.
       var delay = 17 + Math.random() * 34;
       if (ch === '\n') delay = 150 + Math.random() * 90;
       else if (ch === ',' || ch === '{') delay = 90 + Math.random() * 60;
@@ -230,7 +230,7 @@
     }
 
     // rAF is paused in background tabs, so the ceiling can't live in the
-    // animation loop — a page opened in a background tab would sit on the
+    // animation loop, because a page opened in a background tab would sit on the
     // preloader until it was focused. This timer always fires.
     var hardStop = window.setTimeout(settle, CEIL + 400);
 

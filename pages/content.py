@@ -2,7 +2,7 @@
 
 Everything on the page that isn't layout lives here, so the templates stay
 markup and the same project can't drift between two places the way the old
-home/projects pair did. No model — nothing here needs editing through admin.
+home/projects pair did. No model, since nothing here needs admin editing.
 """
 
 PROFILE = {
@@ -78,10 +78,10 @@ PROJECTS = [
         "slug": "marketbrainers",
         "name": "MarketBrainers",
         "kind": "Marketing agency platform",
-        "year": "2024 — present",
+        "year": "2024 to present",
         "role": "Lead developer",
         "summary": (
-            "A marketing agency’s full digital presence — service showcase, "
+            "A marketing agency’s full digital presence. Service showcase, "
             "client portal, and a CMS the team runs themselves, with lead "
             "capture wired through the contact flow."
         ),
@@ -104,7 +104,7 @@ PROJECTS = [
         "year": "2024",
         "role": "Full-stack",
         "summary": (
-            "A cryptocurrency launch platform built twice, on two stacks — "
+            "A cryptocurrency launch platform built twice, on two stacks. "
             "Django for the backend architecture and admin, Next.js for the "
             "modern frontend take on the same product."
         ),
@@ -118,7 +118,8 @@ PROJECTS = [
         "image": "images/crownie-nextjs",
         "image_alt": "The Crownie coin launch platform",
         "links": [
-            {"label": "Django build", "url": "https://www.crownieverse.xyz"},
+            # No www: the apex domain is the only one that resolves.
+            {"label": "Django build", "url": "https://crownieverse.xyz"},
             {"label": "Next.js build", "url": "https://crownie-landing-gilt.vercel.app/"},
         ],
         "status": "live",

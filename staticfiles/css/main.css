@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Joseph Edward — portfolio
+   Joseph Edward portfolio
    Hand-authored. Light editorial: paper ground, large type, hairline rules.
    ========================================================================== */
 
@@ -18,7 +18,7 @@
   --accent:       #b4441f;
   --accent-soft:  #f0ded5;
 
-  /* The code card is dark in both themes — it's the one dark object. */
+  /* The code card is dark in both themes; it's the one dark object. */
   --code-bg:      #17161a;
   --code-chrome:  #201f24;
   --code-ink:     #d8d4cc;
@@ -33,14 +33,14 @@
   --font-serif:   "Instrument Serif", Georgia, "Times New Roman", serif;
   --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Fluid scale — one set of sizes, no mobile fork to drift out of sync. */
+  /* Fluid scale. One set of sizes, no mobile fork to drift out of sync. */
   --t-mono:    clamp(0.6875rem, 0.64rem + 0.18vw, 0.8125rem);
   --t-body:    clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   --t-lead:    clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
   --t-h3:      clamp(1.375rem, 1.1rem + 1.2vw, 2rem);
   --t-h2:      clamp(2rem, 1.4rem + 2.8vw, 4rem);
-  /* Sized so the longer of the two name lines still clears the column —
-     .hero__line clips horizontally as well as vertically. */
+  /* Sized so the longer of the two name lines still clears the column,
+     since .hero__line clips horizontally as well as vertically. */
   --t-display: clamp(2.5rem, 0.5rem + 9.4vw, 8.75rem);
   --t-numeral: clamp(4rem, 2rem + 14vw, 13rem);
 
@@ -164,6 +164,12 @@ a { color: inherit; }
   padding-inline: var(--gutter);
 }
 
+/* Reserve the strip the vertical rail floats in, so it never sits on top of
+   content. Below this width the rail is a dock at the bottom instead. */
+@media (min-width: 56rem) {
+  .shell { padding-right: calc(var(--gutter) + 4.5rem); }
+}
+
 .mono {
   font-family: var(--font-mono);
   font-size: var(--t-mono);
@@ -268,7 +274,7 @@ a { color: inherit; }
 }
 
 /* ==========================================================================
-   Top bar — wordmark only; navigation lives in the rail
+   Top bar: wordmark only, navigation lives in the rail
    ========================================================================== */
 
 .bar {
@@ -352,7 +358,7 @@ a { color: inherit; }
 }
 
 /* ==========================================================================
-   Floating rail — a flat cylinder that expands to labels on hover
+   Floating rail: a flat cylinder that expands to labels on hover
    ========================================================================== */
 
 .rail {
@@ -535,7 +541,7 @@ a { color: inherit; }
   .rail__avatar { width: 2.25rem; height: 2.25rem; }
   .rail__theme { width: 2.5rem; height: 2.5rem; }
 
-  /* There is no hover on touch, so nothing can expand — show the labels
+  /* There is no hover on touch, so nothing can expand. Show the labels
      outright, and fall back to numbers only when they genuinely won't fit. */
   .rail__item {
     min-width: 2.75rem;
@@ -595,7 +601,7 @@ a { color: inherit; }
   clip-path: inset(0 0 0 0);
   transition: clip-path 0.9s var(--ease-in-out);
 }
-/* Only ever shown by the pre-paint script — the page is never blocked by it. */
+/* Only ever shown by the pre-paint script, so the page is never blocked. */
 html.intro-pending .pre { display: block; }
 .pre.is-done { clip-path: inset(0 0 100% 0); }
 
@@ -646,7 +652,7 @@ html.intro-pending .pre { display: block; }
   transform: translateY(0.35em);
 }
 
-/* Status line — the word swaps as loading progresses. */
+/* Status line: the word swaps as loading progresses. */
 .pre__status {
   position: relative;
   overflow: hidden;
@@ -831,7 +837,7 @@ html.intro-pending .hero .hero__scroll {
 @media (max-width: 60rem) { .hero__scroll { display: none; } }
 
 /* ==========================================================================
-   Code card — the one dark object on the page
+   Code card: the one dark object on the page
    ========================================================================== */
 
 .hero__code { position: relative; }
@@ -962,7 +968,7 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
   .about__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
 }
 
-/* Opening statement, set large — this is the first thing anyone reads. */
+/* Opening statement, set large. This is the first thing anyone reads. */
 .about__lead {
   font-size: clamp(1.375rem, 1rem + 1.9vw, 2.5rem);
   font-weight: 500;
@@ -1050,7 +1056,7 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 }
 
 /* ==========================================================================
-   Work — pinned horizontal deck
+   Work: pinned horizontal deck
    ========================================================================== */
 
 .work {

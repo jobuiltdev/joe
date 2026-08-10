@@ -24,7 +24,7 @@ def _page_context():
 def _notification_html(name, email, subject, message):
     """Build the email that lands in the inbox.
 
-    Every interpolated value is escaped — these are raw strings from a public
+    Every interpolated value is escaped, since these are raw strings from a public
     form going straight into an HTML document.
     """
     name, email = escape(name), escape(email)
@@ -49,7 +49,7 @@ def _notification_html(name, email, subject, message):
       <tr>
         <td style="padding:28px 32px;border-bottom:1px solid #e6e2d9">
           <div style="font:500 11px/1.4 ui-monospace,monospace;letter-spacing:.12em;
-                      text-transform:uppercase;color:#8a8578">Portfolio — new message</div>
+                      text-transform:uppercase;color:#8a8578">Portfolio: new message</div>
         </td>
       </tr>
       <tr>
@@ -119,8 +119,8 @@ def home(request):
                 "reply_to": email,
             }
         )
-    except Exception as exc:  # noqa: BLE001 — surface anything as a form error
-        print(f"Contact form: failed to send via Resend — {exc}")
+    except Exception as exc:  # noqa: BLE001, surface anything as a form error
+        print(f"Contact form: failed to send via Resend: {exc}")
         messages.error(
             request,
             "Something went wrong sending that. Please email me directly at "
@@ -130,7 +130,7 @@ def home(request):
 
     messages.success(
         request,
-        f"Thanks {name} — message sent. I'll get back to you within 24 hours.",
+        f"Thanks {name}, message sent. I'll get back to you within 24 hours.",
     )
     # Redirect after POST so a refresh doesn't resubmit, and land on the form.
     return redirect(CONTACT_ANCHOR)

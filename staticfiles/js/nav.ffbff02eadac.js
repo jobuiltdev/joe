@@ -1,7 +1,7 @@
 /* Rail navigation: exact-section jumping and scroll-spy.
 
    The rail is always on screen, so there's no overlay to trap focus in and no
-   scroll to lock — it's just anchors plus a current-section indicator. */
+   scroll to lock. It's just anchors plus a current-section indicator. */
 (function () {
   'use strict';
 
@@ -23,7 +23,7 @@
     if (!target) return;
 
     // The deck is (n+1) x 100vh tall, so its element top is the start of the
-    // pinned range — which is exactly where we want to land.
+    // pinned range, which is exactly where we want to land.
     var offset = bar ? bar.offsetHeight : 0;
     var y = window.pageYOffset + target.getBoundingClientRect().top - offset + 1;
 
@@ -53,7 +53,7 @@
           bar.classList.toggle('is-stuck', window.pageYOffset > window.innerHeight * 0.55);
         }
       } finally {
-        // Always clear the guard — a throw here would freeze every later frame.
+        // Always clear the guard. A throw here would freeze every later frame.
         ticking = false;
       }
     });

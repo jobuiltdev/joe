@@ -2,7 +2,7 @@
 
    The section is (panels + 1) viewports tall; its inner wrapper sticks for
    that whole range, and scroll progress through the range drives the track's
-   translateX. Below the breakpoint — or under reduced motion — none of this
+   translateX. Below the breakpoint, or under reduced motion, none of this
    engages and the panels are a plain vertical stack. */
 (function () {
   'use strict';
@@ -20,7 +20,7 @@
 
   // Height matters as much as width here: a short window can't fit a panel,
   // and a cramped pinned panel is worse than an honest vertical stack. 620px
-  // keeps 1366x768 laptops — a very common size — on the pinned version.
+  // keeps 1366x768 laptops, a very common size, on the pinned version.
   var wide = window.matchMedia('(min-width: 900px) and (min-height: 620px)');
   var motionOk = window.matchMedia('(prefers-reduced-motion: no-preference)');
 
@@ -70,7 +70,7 @@
     var span = panels.length - 1;
     var x = -p * span * 100;
 
-    // Percent of the track, not vw — vw includes the scrollbar, which would
+    // Percent of the track, not vw. vw includes the scrollbar, which would
     // drift each panel a scrollbar's width off centre.
     track.style.transform = 'translate3d(' + x + '%, 0, 0)';
 
@@ -99,7 +99,7 @@
       try {
         render();
       } finally {
-        // Always clear the guard — a throw here would freeze every later frame.
+        // Always clear the guard. A throw here would freeze every later frame.
         ticking = false;
       }
     });

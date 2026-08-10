@@ -1,4 +1,4 @@
-# Joseph Edward — portfolio
+# Joseph Edward, portfolio
 
 A single-page portfolio for a full-stack web and mobile engineer. Django on the
 back, hand-authored CSS on the front, no build step.
@@ -9,13 +9,16 @@ Live: https://joewebs.vercel.app
 
 - **One page.** Hero, about, work, contact. The old `/about/`, `/projects/` and
   `/contact/` URLs 301 to the matching anchor.
-- **Preloader → typing intro.** A paper-coloured preloader tracks real asset
-  loading (fonts, hero image, `load`) with a 700 ms floor and a 2.5 s hard
-  ceiling, then wipes up into an IDE card that types itself out. Skippable on
-  any input, plays once per session, and reduced-motion goes straight to the
-  finished state.
-- **Full-screen nav.** One menu implementation at every breakpoint — no separate
-  mobile drawer. Focus trap, Escape to close, scroll lock, scroll-spy.
+- **Preloader into a typing intro.** The preloader tracks real asset loading
+  (fonts, hero image, `load`) with a 700 ms floor and a 2.5 s hard ceiling,
+  stepping a status line from "Loading portfolio" through to "Ready", then
+  wipes up into an IDE card that types itself out. Skippable on any input,
+  plays once per session, and reduced-motion goes straight to the finished
+  state.
+- **Floating rail nav.** A pill fixed to the right edge: avatar, section dots,
+  theme toggle. Hover or keyboard focus expands it to labels. Below 56rem it
+  becomes a dock at the bottom of the screen, in thumb reach, with labels
+  shown outright since touch has no hover to expand them.
 - **Pinned project deck.** The work section is `(panels + 1) × 100vh`; scroll
   progress through that range drives a horizontal track. Unpins into a plain
   vertical stack below 900×620 or under reduced motion.
@@ -48,7 +51,7 @@ edits stay invisible until you restart.
 ## Layout
 
 ```
-pages/content.py                  all copy and project data — edit this, not the templates
+pages/content.py                  all copy and project data. Edit this, not the templates
 pages/views.py                    one view; GET renders the page, POST is the contact form
 templates/base.html               head, nav include, footer
 pages/templates/pages/partials/   preloader, nav, hero, about, work, contact
@@ -59,7 +62,7 @@ static/js/                        intro.js, nav.js, deck.js, site.js
 ### Adding a project
 
 Append a dict to `PROJECTS` in `pages/content.py` and drop
-`<slug>.webp` + `<slug>.jpg` into `static/images/`. The deck picks it up — the
+`<slug>.webp` + `<slug>.jpg` into `static/images/`. The deck picks it up, and the
 panel count, counter and progress segments are all derived.
 
 Images are committed pre-optimized (resized to display size, webp + jpg pairs,
@@ -74,7 +77,7 @@ git commit -am "..." && git push
 
 `collectstatic` **must** run before you push. Static files are content-hashed
 (`CompressedManifestStaticFilesStorage`) so a deploy can never serve a visitor
-stale CSS out of cache — but that means `staticfiles/` and its
+stale CSS out of cache. That does mean `staticfiles/` and its
 `staticfiles.json` manifest are committed, since Vercel's `@vercel/python`
 builder runs no build step of its own. If you change CSS or JS and forget to
 re-run it, `{% static %}` will raise for the missing manifest entry.
@@ -86,7 +89,7 @@ re-run it, `{% static %}` will raise for the missing manifest entry.
 - Mail from `onboarding@resend.dev` can land in spam. Verify a custom domain in
   Resend to fix it properly.
 - `SECRET_KEY` and `ALLOWED_HOSTS` are still hardcoded in `joe_webs/settings.py`.
-  Both should move to environment variables — set them in Vercel first, or the
+  Both should move to environment variables. Set them in Vercel first, or the
   deploy will break.
 
 ## Contact

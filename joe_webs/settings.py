@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-um60*!8@&-9nj%*%d&120tvt460%s^mh#%2#8c5@w4b68v0!w4
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Off unless DJANGO_DEBUG is explicitly set, so deploys stay safe by default.
-# Locally: `DJANGO_DEBUG=1 python manage.py runserver` — that also turns off
+# Locally: `DJANGO_DEBUG=1 python manage.py runserver`. That also turns off
 # template caching, which otherwise makes edits invisible until a restart.
 DEBUG = os.environ.get('DJANGO_DEBUG', '') == '1'
 
