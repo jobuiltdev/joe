@@ -1,0 +1,64 @@
+{% load static %}
+<section class="section about" id="about">
+  <div class="shell">
+
+    <header class="section__head">
+      <span class="section__index mono">01</span>
+      <h2 class="section__title">About</h2>
+      <span class="section__aside mono">{{ profile.location }}</span>
+    </header>
+
+    <div class="about__grid">
+      <div class="about__body">
+        {% for para in about %}
+          <p class="about__p{% if forloop.first %} about__p--lead{% endif %}">{{ para }}</p>
+        {% endfor %}
+
+        <p class="about__close">
+          <span class="serif-em">{{ about_close }}</span>
+        </p>
+      </div>
+
+      <figure class="about__portrait">
+        <picture>
+          <source srcset="{% static 'images/profile.webp' %}" type="image/webp">
+          <img src="{% static 'images/profile.jpg' %}" width="900" height="1175"
+               loading="lazy" decoding="async"
+               alt="Joseph Edward">
+        </picture>
+      </figure>
+    </div>
+
+    <div class="about__split">
+      <div class="about__col">
+        <h3 class="about__label mono">What I help with</h3>
+        <ul class="services">
+          {% for item in help_with %}
+            <li class="services__item">
+              <span class="services__num mono">{{ forloop.counter|stringformat:"02d" }}</span>
+              <span class="services__text">{{ item }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="about__col">
+        <h3 class="about__label mono">Stack</h3>
+        <ul class="stack">
+          {% for t in stack %}
+            <li class="stack__item">
+              <span class="stack__name">{{ t.name }}</span>
+              <span class="stack__note mono">{{ t.note }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <p class="about__note">
+          Also comfortable with Paystack and Flutterwave integrations, Celery,
+          Docker, and shipping to Vercel, Railway and Expo&nbsp;EAS.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>

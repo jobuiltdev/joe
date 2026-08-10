@@ -1,0 +1,105 @@
+<section class="section contact" id="contact">
+  <div class="shell">
+
+    <header class="section__head">
+      <span class="section__index mono">03</span>
+      <h2 class="section__title">Contact</h2>
+      <span class="section__aside mono">Replies within 24h</span>
+    </header>
+
+    {% if messages %}
+      <ul class="notes">
+        {% for message in messages %}
+          <li class="note note--{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}"
+              role="status">
+            <span class="note__text">{{ message }}</span>
+            <button class="note__x" type="button" data-dismiss aria-label="Dismiss">&times;</button>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="contact__grid">
+
+      <div class="contact__form-col">
+        <p class="contact__lead">
+          Have something you want built? Tell me what you’re working on and
+          I’ll come back to you <span class="serif-em">within 24 hours</span>.
+        </p>
+
+        <form class="form" id="contact-form" method="post" action="{% url 'home' %}#contact"
+              novalidate>
+          {% csrf_token %}
+
+          <div class="field">
+            <label class="field__label mono" for="f-name">Name <span aria-hidden="true">*</span></label>
+            <input class="field__input" id="f-name" name="name" type="text"
+                   autocomplete="name" required>
+          </div>
+
+          <div class="field">
+            <label class="field__label mono" for="f-email">Email <span aria-hidden="true">*</span></label>
+            <input class="field__input" id="f-email" name="email" type="email"
+                   autocomplete="email" inputmode="email" required>
+          </div>
+
+          <div class="field">
+            <label class="field__label mono" for="f-subject">Subject</label>
+            <input class="field__input" id="f-subject" name="subject" type="text"
+                   placeholder="Project enquiry">
+          </div>
+
+          <div class="field">
+            <label class="field__label mono" for="f-message">Message <span aria-hidden="true">*</span></label>
+            <textarea class="field__input field__input--area" id="f-message" name="message"
+                      rows="6" required
+                      placeholder="What are you building, and what do you need?"></textarea>
+          </div>
+
+          <div class="form__foot">
+            <button class="btn btn--solid" type="submit" data-submit>
+              <span data-submit-label>Send message</span>
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
+                   stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M2 7h10M8 3l4 4-4 4"/>
+              </svg>
+            </button>
+            <p class="form__req mono">* Required</p>
+          </div>
+        </form>
+      </div>
+
+      <aside class="contact__direct">
+        <h3 class="about__label mono">Or reach me directly</h3>
+
+        <ul class="direct">
+          <li class="direct__row">
+            <span class="direct__label mono">Email</span>
+            <a class="direct__value" href="mailto:{{ profile.email }}">{{ profile.email }}</a>
+          </li>
+          <li class="direct__row">
+            <span class="direct__label mono">WhatsApp</span>
+            <a class="direct__value" href="{{ profile.whatsapp }}" target="_blank"
+               rel="noopener noreferrer">{{ profile.phone_display }}</a>
+          </li>
+          <li class="direct__row">
+            <span class="direct__label mono">Phone</span>
+            <a class="direct__value" href="tel:{{ profile.phone_tel }}">{{ profile.phone_display }}</a>
+          </li>
+          {% for s in socials %}
+            <li class="direct__row">
+              <span class="direct__label mono">{{ s.label }}</span>
+              <a class="direct__value" href="{{ s.url }}" target="_blank"
+                 rel="noopener noreferrer">{{ s.url|cut:"https://" }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <p class="contact__status mono">
+          <span class="hero__dot" aria-hidden="true"></span>{{ profile.available }}
+        </p>
+      </aside>
+
+    </div>
+  </div>
+</section>

@@ -27,7 +27,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-um60*!8@&-9nj%*%d&120tvt460%s^mh#%2#8c5@w4b68v0!w4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Off unless DJANGO_DEBUG is explicitly set, so deploys stay safe by default.
+# Locally: `DJANGO_DEBUG=1 python manage.py runserver` — that also turns off
+# template caching, which otherwise makes edits invisible until a restart.
+DEBUG = os.environ.get('DJANGO_DEBUG', '') == '1'
 
 ALLOWED_HOSTS = ['*']
 
@@ -128,6 +131,19 @@ CONTACT_EMAIL = 'josephedward201@gmail.com'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Content-hashed filenames, so a redeploy can never serve a visitor stale CSS
+# or JS out of their browser cache. Requires `collectstatic` to have been run:
+# staticfiles/staticfiles.json is what maps a name to its hashed version, and
+# it is committed alongside the rest of staticfiles/.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

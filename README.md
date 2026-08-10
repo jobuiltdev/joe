@@ -1,168 +1,95 @@
-💼 Joseph Edward - Full-Stack Developer Portfolio
-A modern, responsive portfolio website showcasing my projects, skills, and experience as a Full-Stack Developer. Built with Django and styled with Tailwind CSS, featuring a sleek dark mode, smooth animations, and professional design.
+# Joseph Edward — portfolio
 
-Live demo: https://joewebs.vercel.app
+A single-page portfolio for a full-stack web and mobile engineer. Django on the
+back, hand-authored CSS on the front, no build step.
 
-🌟 Features
+Live: https://joewebs.vercel.app
 
-Modern UI/UX: Clean, professional design with smooth animations and transitions
-Dark Mode: Toggle between light and dark themes with persistent preferences
-Responsive Design: Fully optimized for desktop, tablet, and mobile devices
-Project Showcase: Detailed project cards with live links and technology stacks
-Contact Form: Integrated email functionality using Resend API
-Professional Animations: Smooth page transitions and interactive elements
-SEO Optimized: Structured for search engine visibility
+## What's here
 
-🛠️ Tech Stack
-Backend
+- **One page.** Hero, about, work, contact. The old `/about/`, `/projects/` and
+  `/contact/` URLs 301 to the matching anchor.
+- **Preloader → typing intro.** A paper-coloured preloader tracks real asset
+  loading (fonts, hero image, `load`) with a 700 ms floor and a 2.5 s hard
+  ceiling, then wipes up into an IDE card that types itself out. Skippable on
+  any input, plays once per session, and reduced-motion goes straight to the
+  finished state.
+- **Full-screen nav.** One menu implementation at every breakpoint — no separate
+  mobile drawer. Focus trap, Escape to close, scroll lock, scroll-spy.
+- **Pinned project deck.** The work section is `(panels + 1) × 100vh`; scroll
+  progress through that range drives a horizontal track. Unpins into a plain
+  vertical stack below 900×620 or under reduced motion.
+- **Light and dark**, with the theme resolved by a blocking head script so there
+  is no flash of the wrong palette.
 
-Django 5.x - Python web framework
-Python 3.10+ - Programming language
-Resend API - Email service for contact form
+Everything degrades: with JavaScript off the preloader never shows, the hero is
+already in its final state, the deck is a vertical stack, and the nav is a plain
+list of anchors.
 
-Frontend
+## Stack
 
-Tailwind CSS - Utility-first CSS framework
-JavaScript (Vanilla) - Interactive elements
-HTML5 - Semantic markup
-Google Fonts - Space Grotesk & JetBrains Mono
+Django 4.2 · Whitenoise · Resend (contact form) · vanilla CSS and JS ·
+Schibsted Grotesk / Instrument Serif / JetBrains Mono.
 
-Tools & Libraries
+No Tailwind, no bundler, no `package.json`. The design system lives in
+`static/css/main.css` as CSS custom properties.
 
-python-dotenv - Environment variable management
-Django Messages - User feedback system
+## Local setup
 
-⚙️ Installation & Setup
-Prerequisites
+```bash
+pip install -r requirements.txt
+cp .env.example .env          # then add your RESEND_API_KEY
+DJANGO_DEBUG=1 python manage.py runserver
+```
 
-Python 3.10 or higher
-pip (Python package manager)
-Git
+`DJANGO_DEBUG=1` matters locally: with it off, Django caches templates and your
+edits stay invisible until you restart.
 
-🎨 Featured Projects
+## Layout
 
-SZN Brand E-Commerce - Fashion e-commerce platform
+```
+pages/content.py                  all copy and project data — edit this, not the templates
+pages/views.py                    one view; GET renders the page, POST is the contact form
+templates/base.html               head, nav include, footer
+pages/templates/pages/partials/   preloader, nav, hero, about, work, contact
+static/css/main.css               the whole design system
+static/js/                        intro.js, nav.js, deck.js, site.js
+```
 
-Django, PostgreSQL, Payment Gateway Integration
-🔗 Live Site
+### Adding a project
 
+Append a dict to `PROJECTS` in `pages/content.py` and drop
+`<slug>.webp` + `<slug>.jpg` into `static/images/`. The deck picks it up — the
+panel count, counter and progress segments are all derived.
 
-Party Ticketing Platform - Event management system
+Images are committed pre-optimized (resized to display size, webp + jpg pairs,
+lowercase names because Vercel's filesystem is case-sensitive).
 
-Django, Paystack API, QR Code Generation
-🔗 Live Site
+## Deploying
 
+```bash
+python manage.py collectstatic --noinput
+git commit -am "..." && git push
+```
 
-Crownie Coin Launch - Cryptocurrency platform (2 versions)
+`collectstatic` **must** run before you push. Static files are content-hashed
+(`CompressedManifestStaticFilesStorage`) so a deploy can never serve a visitor
+stale CSS out of cache — but that means `staticfiles/` and its
+`staticfiles.json` manifest are committed, since Vercel's `@vercel/python`
+builder runs no build step of its own. If you change CSS or JS and forget to
+re-run it, `{% static %}` will raise for the missing manifest entry.
 
-Django Version & Next.js Version
-Discord API Integration, Referral System
-🔗 Live Site
+`RESEND_API_KEY` must be set as an environment variable in the Vercel dashboard.
 
+## Known issues
 
-MarketBrainers Agency - Marketing agency website
+- Mail from `onboarding@resend.dev` can land in spam. Verify a custom domain in
+  Resend to fix it properly.
+- `SECRET_KEY` and `ALLOWED_HOSTS` are still hardcoded in `joe_webs/settings.py`.
+  Both should move to environment variables — set them in Vercel first, or the
+  deploy will break.
 
-Django, CMS, SEO Optimization
-🔗 Live Site
+## Contact
 
-
-
-📱 Responsive Design
-The portfolio is fully responsive with breakpoints optimized for:
-
-📱 Mobile devices (320px - 767px)
-📱 Tablets (768px - 1023px)
-💻 Desktops (1024px+)
-🖥️ Large screens (1440px+)
-
-🎯 Key Features Implementation
-Dark Mode
-
-Persistent theme preference using localStorage
-Smooth transitions between themes
-Custom scrollbar styling for both modes
-
-Navigation
-
-Sticky navbar with blur effect
-Smooth hamburger animation
-Mobile menu with staggered item animations
-Active page highlighting
-
-Contact Form
-
-Client-side validation
-Server-side processing with Django
-Email delivery via Resend API
-Success/error feedback messages
-Loading states during submission
-
-Animations
-
-Smooth page transitions
-Hover effects on cards and buttons
-Gradient text animations
-Floating elements
-Staggered item reveals
-
-🔒 Security Notes
-
-Never commit .env file to version control
-Use environment variables for sensitive data
-Keep DEBUG=False in production
-Set ALLOWED_HOSTS in production settings
-Use strong SECRET_KEY
-Verify domain in Resend for production emails
-
-📝 Customization
-Update Personal Information
-Edit these files:
-
-templates/about.html - Your bio, skills, experience
-templates/contact.html - Contact details
-settings.py - Email address for contact form
-
-Add New Projects
-Edit templates/projects.html and templates/home.html to add/update project cards.
-Change Color Scheme
-Update Tailwind config in base.html:
-javascriptcolors: {
-    primary: '#667eea',    // Purple
-    secondary: '#764ba2',  // Dark purple
-}
-Update Technology Icons
-Add/replace images in static/tech/ folder and update references in templates.
-🐛 Known Issues
-
-Emails from onboarding@resend.dev may go to spam (solution: verify custom domain)
-Dark mode flash on page load (solution: add inline script in head)
-
-🤝 Contributing
-While this is a personal portfolio, suggestions and feedback are welcome!
-
-Fork the repository
-Create a feature branch (git checkout -b feature/improvement)
-Commit your changes (git commit -m 'Add some improvement')
-Push to the branch (git push origin feature/improvement)
-Open a Pull Request
-
-📄 License
-This project is open source and available under the MIT License.
-📬 Contact
-Joseph Edward
-
-📧 Email: josephedward201@gmail.com
-💼 Portfolio: joewebs.vercel.app
-🔗 LinkedIn: www.linkedin.com/in/joseph-edward-94b7a3322
-💻 GitHub: @zazajo
-
-🙏 Acknowledgments
-
-Design inspiration from modern portfolio trends
-Icons from Heroicons
-Fonts from Google Fonts
-Email service by Resend
-
-
-⭐ If you found this portfolio helpful or interesting, please consider giving it a star!
-Built with ❤️ by Joseph Edward
+josephedward201@gmail.com · [github.com/zazajo](https://github.com/zazajo) ·
+[linkedin](https://www.linkedin.com/in/joseph-edward-94b7a3322)

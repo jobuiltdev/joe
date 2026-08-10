@@ -1,0 +1,57 @@
+<section class="hero" id="top">
+  <div class="shell hero__inner">
+
+    <div class="hero__lede">
+      <h1 class="hero__name" id="hero-name">
+        <span class="hero__line"><span class="hero__line-in">{{ profile.first }}</span></span>
+        <span class="hero__line"><span class="hero__line-in">{{ profile.last }}</span></span>
+      </h1>
+
+      <div class="hero__rule rule" aria-hidden="true"></div>
+
+      <p class="hero__role">
+        Full-stack <span class="serif-em">web &amp; mobile</span> engineer
+      </p>
+
+      <p class="hero__blurb">
+        Secure, scalable products for startups and businesses — from Django APIs
+        to Next.js front ends and React&nbsp;Native apps.
+      </p>
+
+      <div class="hero__actions">
+        <a class="btn btn--solid" href="#work" data-nav-link="work">View work</a>
+        <a class="btn" href="#contact" data-nav-link="contact">Get in touch</a>
+      </div>
+
+      <p class="hero__status mono">
+        <span class="hero__dot" aria-hidden="true"></span>{{ profile.available }}
+      </p>
+    </div>
+
+    <div class="hero__code">
+      <div class="code" id="code-card">
+        <div class="code__chrome">
+          <span class="code__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="code__file mono">joseph.ts</span>
+        </div>
+
+        <pre class="code__body"><code id="code-out" class="code__out"></code><span class="code__caret" id="code-caret" aria-hidden="true"></span></pre>
+
+        <div class="code__ac" id="code-ac" aria-hidden="true">
+          <span class="code__ac-row is-on"><i class="code__ac-kind">abc</i>React Native</span>
+          <span class="code__ac-row"><i class="code__ac-kind">abc</i>React Query</span>
+          <span class="code__ac-row"><i class="code__ac-kind">abc</i>Redux</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <a class="hero__scroll mono" href="#about" data-nav-link="about">
+    <span>Scroll</span>
+    <svg viewBox="0 0 12 26" width="12" height="26" fill="none" stroke="currentColor"
+         stroke-width="1.2" aria-hidden="true">
+      <path d="M6 0v24M1 19l5 5 5-5"/>
+    </svg>
+  </a>
+</section>

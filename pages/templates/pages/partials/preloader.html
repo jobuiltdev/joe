@@ -1,0 +1,11 @@
+{% load static %}
+<div class="pre" id="preloader" aria-hidden="true"
+     data-preload="{% static 'images/marketbrainers.webp' %}">
+  <div class="pre__inner">
+    <p class="pre__name mono">{{ profile.name }}</p>
+    <div class="pre__track">
+      <span class="pre__fill" id="pre-fill"></span>
+    </div>
+    <p class="pre__count mono"><span id="pre-count">00</span></p>
+  </div>
+</div>
