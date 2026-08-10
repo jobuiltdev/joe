@@ -164,6 +164,12 @@ a { color: inherit; }
   padding-inline: var(--gutter);
 }
 
+/* Reserve the strip the vertical rail floats in, so it never sits on top of
+   content. Below this width the rail is a dock at the bottom instead. */
+@media (min-width: 56rem) {
+  .shell { padding-right: calc(var(--gutter) + 4.5rem); }
+}
+
 .mono {
   font-family: var(--font-mono);
   font-size: var(--t-mono);
@@ -1198,6 +1204,14 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
   text-transform: uppercase;
   min-height: 2.75rem;
 }
+
+/* Source sits a step quieter than the live links: the demo is the headline,
+   the repo is for whoever wants to read it. */
+.panel__link--repo { color: var(--ink-faint); }
+@media (hover: hover) {
+  .panel__link--repo:hover { color: var(--ink); }
+}
+.panel__link--repo:focus-visible { color: var(--ink); }
 
 .panel__side {
   display: flex;

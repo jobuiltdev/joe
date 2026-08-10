@@ -73,7 +73,34 @@ STACK = [
     {"name": "Tailwind", "note": "ui"},
 ]
 
+# Each project may carry a "repo" URL. Leave it empty and the panel simply
+# doesn't render a source link, so half-filled entries never ship a dead link.
 PROJECTS = [
+    {
+        "slug": "vaultor",
+        "name": "Vaultor",
+        "kind": "Prediction market platform",
+        "year": "2025",
+        "role": "Full-stack",
+        "summary": (
+            "A perception-first prediction ecosystem: markets that settle "
+            "on-chain, continuous position monitoring, and coverage pools that "
+            "protect capital when markets turn violent."
+        ),
+        "features": [
+            "Prediction markets with on-chain settlement",
+            "Round-the-clock position monitoring and alerts",
+            "Insurance pools and portfolio analytics",
+            "Referral programme and incubator tracks",
+        ],
+        "tech": ["Next.js", "React", "TypeScript", "Web3"],
+        "image": "images/vaultor",
+        "image_alt": "The Vaultor prediction market platform",
+        # The apex redirects to www, so link www directly and skip the hop.
+        "links": [{"label": "Visit site", "url": "https://www.vaultor.org"}],
+        "repo": "",
+        "status": "live",
+    },
     {
         "slug": "marketbrainers",
         "name": "MarketBrainers",
@@ -95,6 +122,7 @@ PROJECTS = [
         "image": "images/marketbrainers",
         "image_alt": "The MarketBrainers marketing agency website",
         "links": [{"label": "Visit site", "url": "https://www.marketbrainer.org"}],
+        "repo": "",
         "status": "live",
     },
     {
@@ -122,6 +150,7 @@ PROJECTS = [
             {"label": "Django build", "url": "https://crownieverse.xyz"},
             {"label": "Next.js build", "url": "https://crownie-landing-gilt.vercel.app/"},
         ],
+        "repo": "",
         "status": "live",
     },
 ]
