@@ -2,10 +2,22 @@
 <div class="pre" id="preloader" aria-hidden="true"
      data-preload="{% static 'images/marketbrainers.webp' %}">
   <div class="pre__inner">
-    <p class="pre__name mono">{{ profile.name }}</p>
-    <div class="pre__track">
-      <span class="pre__fill" id="pre-fill"></span>
+
+    <div class="pre__top">
+      <span class="pre__mark mono">{{ profile.name }}</span>
+      <span class="pre__place mono">{{ profile.location }}</span>
     </div>
-    <p class="pre__count mono"><span id="pre-count">00</span></p>
+
+    <div class="pre__bottom">
+      <span class="pre__count">
+        <span id="pre-count">00</span><i class="pre__pct">%</i>
+      </span>
+      <span class="pre__status mono" id="pre-status">
+        <span class="pre__word">Loading portfolio</span>
+      </span>
+    </div>
+
   </div>
+
+  <div class="pre__track"><span class="pre__fill" id="pre-fill"></span></div>
 </div>

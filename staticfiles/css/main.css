@@ -115,8 +115,6 @@ body {
   overflow-x: hidden;
 }
 
-body.is-locked { overflow: hidden; }
-
 h1, h2, h3, h4, p, figure, blockquote, ul, ol { margin: 0; }
 ul, ol { padding: 0; list-style: none; }
 img, svg { display: block; max-width: 100%; }
@@ -172,13 +170,6 @@ a { color: inherit; }
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.serif-em {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.01em;
 }
 
 .rule {
@@ -277,14 +268,15 @@ a { color: inherit; }
 }
 
 /* ==========================================================================
-   Top bar
+   Top bar — wordmark only; navigation lives in the rail
    ========================================================================== */
 
 .bar {
   position: fixed;
   inset: 0 0 auto 0;
-  z-index: 90;
+  z-index: 60;
   height: var(--bar-h);
+  pointer-events: none;
 }
 
 .bar__inner {
@@ -295,19 +287,16 @@ a { color: inherit; }
   height: 100%;
 }
 
-/* Backing only appears once you've left the hero, so the hero stays clean. */
 .bar::before {
   content: "";
   position: absolute;
   inset: 0;
-  /* Solid, not a backdrop-filter: blurring the backdrop forces a GPU
-     readback of whatever is underneath every frame, and underneath is the
-     pinned deck's full-width composited track. That combination stalls the
-     renderer badly enough to lock the tab. */
+  /* Solid, not a backdrop-filter: blurring the backdrop forces a GPU readback
+     of whatever is underneath every frame, and underneath is the pinned deck's
+     full-width composited track. That combination stalls the renderer. */
   background: var(--paper);
   opacity: 0;
   transition: opacity 0.4s var(--ease);
-  pointer-events: none;
 }
 .bar.is-stuck::before { opacity: 1; }
 
@@ -323,17 +312,17 @@ a { color: inherit; }
 .bar.is-stuck .bar__rule { transform: scaleX(1); }
 
 .bar__mark,
-.bar__right { position: relative; z-index: 1; }
+.bar__meta { position: relative; z-index: 1; pointer-events: auto; }
 
 .bar__mark {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: clamp(0.95rem, 0.85rem + 0.4vw, 1.1rem);
   letter-spacing: -0.02em;
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  min-height: 2.75rem;
 }
 .bar__mark-full { display: none; }
 @media (min-width: 34rem) {
@@ -341,194 +330,257 @@ a { color: inherit; }
   .bar__mark-full { display: block; }
 }
 
-.bar__right {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.5rem, 2vw, 1.25rem);
-}
+.bar__meta { color: var(--ink-faint); }
+@media (max-width: 44rem) { .bar__meta { display: none; } }
 
-.bar__theme {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 50%;
-  color: var(--ink);
-  transition: background 0.3s var(--ease);
-}
-@media (hover: hover) { .bar__theme:hover { background: var(--paper-sunk); } }
+/* Theme icon swap (used inside the rail) ---------------------------------- */
 
-.bar__theme-icon { overflow: visible; }
-.bar__sun, .bar__rays, .bar__moon { transition: opacity 0.35s var(--ease), transform 0.5s var(--ease); }
-.bar__moon { opacity: 0; transform-origin: center; transform: rotate(-70deg) scale(0.5); }
+.bar__sun, .bar__rays, .bar__moon {
+  transition: opacity 0.35s var(--ease), transform 0.5s var(--ease);
+  transform-origin: center;
+}
+.bar__moon { opacity: 0; transform: rotate(-70deg) scale(0.5); }
 
 :root[data-theme="dark"] .bar__sun,
-:root[data-theme="dark"] .bar__rays { opacity: 0; transform: scale(0.4); transform-origin: center; }
+:root[data-theme="dark"] .bar__rays { opacity: 0; transform: scale(0.4); }
 :root[data-theme="dark"] .bar__moon { opacity: 1; transform: none; }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .bar__sun,
-  :root:not([data-theme="light"]) .bar__rays { opacity: 0; transform: scale(0.4); transform-origin: center; }
+  :root:not([data-theme="light"]) .bar__rays { opacity: 0; transform: scale(0.4); }
   :root:not([data-theme="light"]) .bar__moon { opacity: 1; transform: none; }
 }
 
-.bar__menu {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 2.75rem;
-  padding-inline: 0.35rem;
-  color: var(--ink);
-}
-
-.bar__menu-label::after { content: attr(data-open); }
-.bar__menu-glyph {
-  position: relative;
-  display: block;
-  width: 1.4rem;
-  height: 0.6rem;
-}
-.bar__menu-glyph i {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: currentColor;
-  transition: transform 0.45s var(--ease);
-}
-.bar__menu-glyph i:first-child { top: 0; }
-.bar__menu-glyph i:last-child  { bottom: 0; }
-
-body.menu-open .bar__menu-label::after { content: attr(data-close); }
-body.menu-open .bar__menu-glyph i:first-child { transform: translateY(0.3rem) rotate(45deg); }
-body.menu-open .bar__menu-glyph i:last-child  { transform: translateY(-0.3rem) rotate(-45deg); }
-
 /* ==========================================================================
-   Full-screen menu
+   Floating rail — a flat cylinder that expands to labels on hover
    ========================================================================== */
 
-.menu {
+.rail {
   position: fixed;
-  inset: 0;
-  z-index: 80;
-  visibility: hidden;
-  pointer-events: none;
+  z-index: 70;
+  top: 50%;
+  right: clamp(0.75rem, 2vw, 1.75rem);
+  transform: translateY(-50%);
 }
-.menu[data-state="open"] { visibility: visible; pointer-events: auto; }
 
-/* Grows from the trigger corner to fill the screen. clip-path is the effect;
-   opacity carries browsers that won't animate it. */
-.menu__sheet {
-  position: absolute;
-  inset: 0;
-  background: var(--paper);
+.rail__pill {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  opacity: 0;
-  clip-path: circle(0% at calc(100% - 3rem) 2.5rem);
-  transition: clip-path 0.65s var(--ease), opacity 0.3s var(--ease);
-}
-.menu[data-state="open"] .menu__sheet {
-  opacity: 1;
-  clip-path: circle(150% at calc(100% - 3rem) 2.5rem);
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  box-shadow: 0 1px 2px rgba(20, 18, 12, 0.04),
+              0 10px 30px -12px rgba(20, 18, 12, 0.22);
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
 }
 
-.menu__inner {
+.rail:hover .rail__pill,
+.rail:focus-within .rail__pill {
+  border-color: var(--rule-strong);
+  box-shadow: 0 1px 2px rgba(20, 18, 12, 0.05),
+              0 18px 44px -14px rgba(20, 18, 12, 0.3);
+}
+
+/* Avatar ---------------------------------------------------------------- */
+
+.rail__avatar {
+  position: relative;
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: 50%;
+  overflow: visible;
+}
+.rail__avatar img {
   width: 100%;
-  padding-block: var(--bar-h) clamp(1.5rem, 4vh, 3rem);
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease);
+}
+.rail__avatar:hover img { transform: scale(1.06); }
+
+/* Ring that draws itself around the avatar on hover. */
+.rail__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.4s var(--ease), transform 0.5s var(--ease);
+}
+.rail__avatar:hover .rail__ring,
+.rail__avatar:focus-visible .rail__ring { opacity: 1; transform: scale(1); }
+
+.rail__divider {
+  width: 1rem;
+  height: 1px;
+  background: var(--rule);
+  flex: none;
 }
 
-.menu__item { border-top: 1px solid var(--rule); }
-.menu__item:last-child { border-bottom: 1px solid var(--rule); }
+/* Items ----------------------------------------------------------------- */
 
-.menu__link {
+.rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.rail__item {
   position: relative;
   display: flex;
-  align-items: baseline;
-  gap: clamp(0.75rem, 3vw, 2.5rem);
-  padding-block: clamp(0.7rem, 2.2vh, 1.5rem);
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.5rem;
+  padding-inline: 0.7rem;
+  border-radius: 999px;
   text-decoration: none;
-  overflow: hidden;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
 }
 
-.menu__num { color: var(--ink-faint); transition: color 0.35s var(--ease); }
-
-.menu__word {
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 1rem + 9vw, 7rem);
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  transition: transform 0.5s var(--ease), color 0.35s var(--ease);
+.rail__dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  transition: opacity 0.3s var(--ease), transform 0.4s var(--ease);
 }
 
-.menu__underline {
+/* The number is what shows while collapsed; the label replaces it on expand. */
+.rail__num {
   position: absolute;
-  inset: auto 0 0 0;
-  height: 1px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+  pointer-events: none;
+}
+
+.rail__label {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.45s var(--ease), opacity 0.3s var(--ease);
+}
+
+.rail:hover .rail__label,
+.rail:focus-within .rail__label { max-width: 7rem; opacity: 1; }
+
+.rail__item.is-current { color: var(--ink); }
+.rail__item.is-current .rail__dot {
+  opacity: 1;
   background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.5s var(--ease);
+  transform: scale(1.35);
 }
 
 @media (hover: hover) {
-  .menu__link:hover .menu__word { transform: translateX(clamp(0.5rem, 2vw, 1.75rem)); color: var(--accent); }
-  .menu__link:hover .menu__num { color: var(--accent); }
-  .menu__link:hover .menu__underline { transform: scaleX(1); }
+  .rail__item:hover { color: var(--ink); background: var(--paper-sunk); }
+  .rail__item:hover .rail__dot { opacity: 1; }
 }
-.menu__link:focus-visible .menu__underline { transform: scaleX(1); }
+.rail__item:focus-visible { color: var(--ink); background: var(--paper-sunk); }
 
-.menu__link.is-current .menu__num { color: var(--accent); }
+/* Theme toggle ---------------------------------------------------------- */
 
-/* Items rise in behind the sheet wipe. */
-.menu__item,
-.menu__foot {
-  opacity: 0;
-  transform: translateY(1.75rem);
-  transition: opacity 0.5s var(--ease), transform 0.6s var(--ease);
+.rail__theme {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: 50%;
+  color: var(--ink-faint);
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
 }
-.menu[data-state="open"] .menu__item,
-.menu[data-state="open"] .menu__foot { opacity: 1; transform: none; }
-.menu[data-state="open"] .menu__item:nth-child(1) { transition-delay: 0.16s; }
-.menu[data-state="open"] .menu__item:nth-child(2) { transition-delay: 0.22s; }
-.menu[data-state="open"] .menu__item:nth-child(3) { transition-delay: 0.28s; }
-.menu[data-state="open"] .menu__foot { transition-delay: 0.34s; }
-
-.menu__foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem 2rem;
-  margin-top: clamp(1.75rem, 5vh, 3.5rem);
+@media (hover: hover) {
+  .rail__theme:hover { color: var(--ink); background: var(--paper-sunk); }
 }
 
-.menu__socials { display: flex; flex-wrap: wrap; gap: clamp(1rem, 3vw, 2rem); }
-.menu__socials a { min-height: 2.75rem; display: inline-flex; align-items: center; }
+/* Mobile: the rail becomes a dock at the bottom, in thumb reach ---------- */
 
-.menu__email {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono);
-  color: var(--ink-soft);
-  text-decoration: none;
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 0.2em;
-  min-height: 2.75rem;
-  display: inline-flex;
-  align-items: center;
+@media (max-width: 56rem) {
+  .rail {
+    top: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .rail__pill {
+    flex-direction: row;
+    gap: 0.25rem;
+    padding: 0.375rem;
+  }
+
+  .rail__list { flex-direction: row; width: auto; gap: 0.1rem; }
+  .rail__divider { width: 1px; height: 1.25rem; }
+
+  .rail__avatar { width: 2.25rem; height: 2.25rem; }
+  .rail__theme { width: 2.5rem; height: 2.5rem; }
+
+  /* There is no hover on touch, so nothing can expand — show the labels
+     outright, and fall back to numbers only when they genuinely won't fit. */
+  .rail__item {
+    min-width: 2.75rem;
+    height: 2.75rem;
+    padding-inline: 0.6rem;
+    justify-content: center;
+  }
+  .rail__dot { display: none; }
+  .rail__num { position: static; opacity: 1; }
+  .rail__label {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .rail__item.is-current { background: var(--paper-sunk); color: var(--accent); }
+}
+
+@media (max-width: 56rem) and (min-width: 22rem) {
+  .rail__num {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    opacity: 1;
+  }
+  .rail__label {
+    position: static;
+    width: auto;
+    height: auto;
+    max-width: none;
+    opacity: 1;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+/* Keep the last section clear of the dock. */
+@media (max-width: 56rem) {
+  .foot { padding-bottom: calc(clamp(2.5rem, 6vw, 4rem) + 4rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu__sheet { clip-path: none; }
+  .rail__label { transition: none; }
 }
-
-/* Without JS the panel can never open, so surface the links inline instead. */
-html:not(.has-js) .menu { position: static; visibility: visible; pointer-events: auto; }
-html:not(.has-js) .menu__sheet { position: static; opacity: 1; clip-path: none; }
-html:not(.has-js) .menu__item,
-html:not(.has-js) .menu__foot { opacity: 1; transform: none; }
-html:not(.has-js) .bar__menu { display: none; }
 
 /* ==========================================================================
    Preloader
@@ -539,29 +591,81 @@ html:not(.has-js) .bar__menu { display: none; }
   inset: 0;
   z-index: 150;
   display: none;
-  align-items: center;
-  justify-content: center;
   background: var(--paper);
   clip-path: inset(0 0 0 0);
   transition: clip-path 0.9s var(--ease-in-out);
 }
-/* Only ever shown by JS — the page must never be blocked by it. */
-html.intro-pending .pre { display: flex; }
+/* Only ever shown by the pre-paint script — the page is never blocked by it. */
+html.intro-pending .pre { display: block; }
 .pre.is-done { clip-path: inset(0 0 100% 0); }
 
 .pre__inner {
   display: flex;
-  align-items: center;
-  gap: clamp(0.75rem, 3vw, 1.75rem);
-  width: min(30rem, calc(100vw - 2 * var(--gutter)));
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: clamp(1.25rem, 4vh, 2.75rem) var(--gutter) clamp(2rem, 5vh, 3.25rem);
 }
 
-.pre__name { color: var(--ink); white-space: nowrap; }
-@media (max-width: 30rem) { .pre__name { font-size: 0.625rem; } }
+.pre__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ink-faint);
+}
+.pre__mark { color: var(--ink); }
+@media (max-width: 34rem) { .pre__place { display: none; } }
+
+.pre__bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.pre__count {
+  display: flex;
+  align-items: flex-start;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 1rem + 14vw, 11rem);
+  font-weight: 600;
+  line-height: 0.8;
+  letter-spacing: -0.055em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.pre__pct {
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 0.6rem + 0.5vw, 1rem);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+  margin-left: 0.35rem;
+  transform: translateY(0.35em);
+}
+
+/* Status line — the word swaps as loading progresses. */
+.pre__status {
+  position: relative;
+  overflow: hidden;
+  height: 1.5em;
+  padding-bottom: 0.35rem;
+  color: var(--ink-soft);
+  text-align: right;
+}
+.pre__word { display: block; }
+.pre__word.is-entering { animation: word-in 0.5s var(--ease) both; }
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: none; }
+}
+.pre__status.is-ready { color: var(--accent); }
 
 .pre__track {
-  position: relative;
-  flex: 1;
+  position: absolute;
+  inset: auto 0 0 0;
   height: 1px;
   background: var(--rule);
 }
@@ -571,17 +675,13 @@ html.intro-pending .pre { display: flex; }
   width: 0;
   background: var(--ink);
 }
-
-.pre__count {
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-  min-width: 2.5ch;
-  text-align: right;
-}
+.pre__status.is-ready ~ * .pre__fill,
+.pre.is-ready .pre__fill { background: var(--accent); }
 
 @media (prefers-reduced-motion: reduce) {
   .pre { transition: opacity 0.2s linear; }
   .pre.is-done { clip-path: none; opacity: 0; }
+  .pre__word.is-entering { animation: none; }
 }
 
 /* ==========================================================================
@@ -595,6 +695,10 @@ html.intro-pending .pre { display: flex; }
   display: flex;
   align-items: center;
   padding-block: calc(var(--bar-h) + 2rem) clamp(5rem, 12vh, 8rem);
+}
+@media (max-width: 56rem) {
+  /* Clear the floating dock. */
+  .hero { padding-bottom: 6rem; }
 }
 
 .hero__inner {
@@ -646,7 +750,6 @@ html.intro-pending .hero .hero__rule { transform: scaleX(0); }
   letter-spacing: -0.02em;
   margin-bottom: 0.9rem;
 }
-.hero__role .serif-em { font-size: 1.12em; }
 
 .hero__blurb {
   max-width: 34ch;
@@ -852,49 +955,37 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 
 .about__grid {
   display: grid;
-  gap: clamp(2rem, 5vw, 4.5rem);
+  gap: clamp(1.5rem, 5vw, 4.5rem);
   align-items: start;
 }
 @media (min-width: 58rem) {
-  .about__grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.85fr); }
+  .about__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+}
+
+/* Opening statement, set large — this is the first thing anyone reads. */
+.about__lead {
+  font-size: clamp(1.375rem, 1rem + 1.9vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  max-width: 20ch;
 }
 
 .about__p {
   color: var(--ink-soft);
-  max-width: 58ch;
-  margin-bottom: 1.15em;
+  max-width: 56ch;
+  line-height: 1.65;
 }
-.about__p--lead {
-  color: var(--ink);
-  font-size: var(--t-lead);
-  line-height: 1.45;
-  letter-spacing: -0.015em;
-  max-width: 26ch;
-  margin-bottom: 1.4rem;
-}
+.about__p + .about__p { margin-top: 1.1em; }
 
 .about__close {
-  margin-top: clamp(1.5rem, 4vw, 2.5rem);
-  padding-top: clamp(1.5rem, 4vw, 2.5rem);
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  padding-top: clamp(1.5rem, 4vw, 2.25rem);
   border-top: 1px solid var(--rule);
-  font-size: clamp(1.25rem, 0.9rem + 1.5vw, 2.125rem);
-  line-height: 1.3;
-  max-width: 26ch;
-}
-
-.about__portrait { margin: 0; }
-.about__portrait img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  filter: grayscale(1) contrast(1.04);
-  transition: filter 0.7s var(--ease);
-}
-@media (hover: hover) {
-  .about__portrait:hover img { filter: grayscale(0) contrast(1); }
-}
-@media (max-width: 58rem) {
-  .about__portrait { max-width: 18rem; }
+  font-size: clamp(1.125rem, 0.95rem + 1vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  max-width: 44ch;
 }
 
 /* Services + stack ------------------------------------------------------ */
@@ -902,7 +993,7 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 .about__split {
   display: grid;
   gap: clamp(2.5rem, 6vw, 5rem);
-  margin-top: clamp(3.5rem, 8vw, 6.5rem);
+  margin-top: clamp(3rem, 7vw, 5.5rem);
   padding-top: clamp(2rem, 4vw, 3rem);
   border-top: 1px solid var(--rule);
 }

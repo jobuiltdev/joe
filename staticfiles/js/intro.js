@@ -170,6 +170,41 @@
       instant || reduced ? 0 : 950);
   }
 
+  /* Status line ---------------------------------------------------------- */
+
+  // [minimum percent, word]
+  var STAGES = [
+    [0,  'Loading portfolio'],
+    [28, 'Fetching projects'],
+    [58, 'Setting the type'],
+    [86, 'Almost there'],
+    [100, 'Ready']
+  ];
+
+  var statusEl = document.getElementById('pre-status');
+  var shownStage = -1;
+
+  function setStage(pct) {
+    if (!statusEl) return;
+
+    var i = 0;
+    for (var n = 0; n < STAGES.length; n++) {
+      if (pct >= STAGES[n][0]) i = n;
+    }
+    if (i === shownStage) return;
+    shownStage = i;
+
+    var word = document.createElement('span');
+    word.className = 'pre__word is-entering';
+    word.textContent = STAGES[i][1];
+    statusEl.textContent = '';
+    statusEl.appendChild(word);
+
+    var ready = i === STAGES.length - 1;
+    statusEl.classList.toggle('is-ready', ready);
+    if (ready && pre) pre.classList.add('is-ready');
+  }
+
   function runPreloader(done) {
     if (!pre || !fill || !count) { done(); return; }
 
@@ -189,7 +224,9 @@
       window.clearTimeout(hardStop);
       fill.style.width = '100%';
       count.textContent = '100';
-      window.setTimeout(function () { dismissPre(false); done(); }, 180);
+      setStage(100);
+      // Hold on "Ready" long enough to actually read it.
+      window.setTimeout(function () { dismissPre(false); done(); }, reduced ? 60 : 480);
     }
 
     // rAF is paused in background tabs, so the ceiling can't live in the
@@ -228,6 +265,7 @@
       var pct = Math.round(shown * 100);
       fill.style.width = (shown * 100).toFixed(2) + '%';
       count.textContent = pct < 10 ? '0' + pct : String(pct);
+      setStage(pct);
 
       if (ready && elapsed >= FLOOR && pct >= 99) { settle(); return; }
 

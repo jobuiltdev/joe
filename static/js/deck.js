@@ -90,18 +90,18 @@
 
     if (current) current.textContent = i < 9 ? '0' + (i + 1) : String(i + 1);
     segs.forEach(function (s, n) { s.classList.toggle('is-on', n === i); });
-
-    document.dispatchEvent(new CustomEvent('deck:panel', {
-      detail: { index: i, total: panels.length }
-    }));
   }
 
   function onScroll() {
     if (ticking) return;
     ticking = true;
     window.requestAnimationFrame(function () {
-      render();
-      ticking = false;
+      try {
+        render();
+      } finally {
+        // Always clear the guard — a throw here would freeze every later frame.
+        ticking = false;
+      }
     });
   }
 

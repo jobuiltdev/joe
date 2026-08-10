@@ -1,4 +1,3 @@
-{% load static %}
 <section class="section about" id="about">
   <div class="shell">
 
@@ -9,25 +8,16 @@
     </header>
 
     <div class="about__grid">
+      <p class="about__lead">{{ about.0 }}</p>
+
       <div class="about__body">
         {% for para in about %}
-          <p class="about__p{% if forloop.first %} about__p--lead{% endif %}">{{ para }}</p>
+          {% if not forloop.first %}<p class="about__p">{{ para }}</p>{% endif %}
         {% endfor %}
-
-        <p class="about__close">
-          <span class="serif-em">{{ about_close }}</span>
-        </p>
       </div>
-
-      <figure class="about__portrait">
-        <picture>
-          <source srcset="{% static 'images/profile.webp' %}" type="image/webp">
-          <img src="{% static 'images/profile.jpg' %}" width="900" height="1175"
-               loading="lazy" decoding="async"
-               alt="Joseph Edward">
-        </picture>
-      </figure>
     </div>
+
+    <p class="about__close">{{ about_close }}</p>
 
     <div class="about__split">
       <div class="about__col">
