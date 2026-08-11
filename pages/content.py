@@ -73,32 +73,33 @@ STACK = [
     {"name": "Tailwind", "note": "ui"},
 ]
 
-# Each project may carry a "repo" URL. Leave it empty and the panel simply
-# doesn't render a source link, so half-filled entries never ship a dead link.
+# Each project may carry "repos": a list of {label, url}. Crownie has one per
+# build, so this is a list rather than a single URL. An empty list renders no
+# source link at all, so a half-filled entry never ships a dead link.
 PROJECTS = [
     {
         "slug": "vaultor",
         "name": "Vaultor",
-        "kind": "Prediction market platform",
+        "kind": "Solana presale platform",
         "year": "2025",
         "role": "Full-stack",
         "summary": (
-            "A perception-first prediction ecosystem: markets that settle "
-            "on-chain, continuous position monitoring, and coverage pools that "
-            "protect capital when markets turn violent."
+            "The Genesis presale platform for a perception-first prediction "
+            "product. Solana wallet authentication with signature verification "
+            "on the backend, a Django REST API, and a Next.js front end."
         ),
         "features": [
-            "Prediction markets with on-chain settlement",
-            "Round-the-clock position monitoring and alerts",
-            "Insurance pools and portfolio analytics",
-            "Referral programme and incubator tracks",
+            "Solana wallet auth with server-side signature checks",
+            "Presale flow with referral tracking",
+            "Django REST API with generated schema docs",
+            "Roadmap, updates, FAQ and document management",
         ],
-        "tech": ["Next.js", "React", "TypeScript", "Web3"],
+        "tech": ["Django", "DRF", "PostgreSQL", "Next.js", "TypeScript", "Solana"],
         "image": "images/vaultor",
         "image_alt": "The Vaultor prediction market platform",
         # The apex redirects to www, so link www directly and skip the hop.
         "links": [{"label": "Visit site", "url": "https://www.vaultor.org"}],
-        "repo": "",
+        "repos": [{"label": "Source", "url": "https://github.com/zazajo/vaultor"}],
         "status": "live",
     },
     {
@@ -122,7 +123,7 @@ PROJECTS = [
         "image": "images/marketbrainers",
         "image_alt": "The MarketBrainers marketing agency website",
         "links": [{"label": "Visit site", "url": "https://www.marketbrainer.org"}],
-        "repo": "",
+        "repos": [{"label": "Source", "url": "https://github.com/zazajo/marketbrainers"}],
         "status": "live",
     },
     {
@@ -150,7 +151,10 @@ PROJECTS = [
             {"label": "Django build", "url": "https://crownieverse.xyz"},
             {"label": "Next.js build", "url": "https://crownie-landing-gilt.vercel.app/"},
         ],
-        "repo": "",
+        "repos": [
+            {"label": "Django source", "url": "https://github.com/zazajo/crw-landing"},
+            {"label": "Next.js source", "url": "https://github.com/zazajo/crownie-landing"},
+        ],
         "status": "live",
     },
 ]

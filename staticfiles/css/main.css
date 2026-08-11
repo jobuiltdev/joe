@@ -1205,6 +1205,11 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
   min-height: 2.75rem;
 }
 
+/* Source links get their own row so a project with two builds doesn't wrap
+   its four links into a ragged block. */
+.panel__links--repos { margin-top: 0.75rem; gap: clamp(0.85rem, 2.5vw, 1.5rem); }
+.panel__links--repos:empty { display: none; }
+
 /* Source sits a step quieter than the live links: the demo is the headline,
    the repo is for whoever wants to read it. */
 .panel__link--repo { color: var(--ink-faint); }

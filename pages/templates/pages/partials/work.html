@@ -64,9 +64,11 @@
                     </svg>
                   </a>
                 {% endfor %}
+              </div>
 
-                {% if p.repo %}
-                  <a class="ln panel__link panel__link--repo" href="{{ p.repo }}"
+              <div class="panel__links panel__links--repos">
+                {% for r in p.repos %}
+                  <a class="ln panel__link panel__link--repo" href="{{ r.url }}"
                      target="_blank" rel="noopener noreferrer">
                     <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"
                          aria-hidden="true">
@@ -79,9 +81,9 @@
                                1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01
                                1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
                     </svg>
-                    Source
+                    {{ r.label }}
                   </a>
-                {% endif %}
+                {% endfor %}
               </div>
             </div>
 
