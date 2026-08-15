@@ -1,13 +1,26 @@
 {
-    "builds": [{
+  "builds": [
+    {
       "src": "joe_webs/wsgi.py",
       "use": "@vercel/python",
       "config": { "maxLambdaSize": "15mb", "runtime": "python3.13" }
-    }],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "joe_webs/wsgi.py"
+    },
+    {
+      "src": "staticfiles/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/staticfiles/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
       }
-    ]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "joe_webs/wsgi.py"
+    }
+  ]
 }
