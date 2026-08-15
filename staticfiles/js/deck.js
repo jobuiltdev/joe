@@ -15,6 +15,7 @@
   var shots = Array.prototype.slice.call(deck.querySelectorAll('[data-deck-parallax] img'));
   var segs = Array.prototype.slice.call(deck.querySelectorAll('[data-deck-go]'));
   var current = deck.querySelector('[data-deck-current]');
+  var videos = Array.prototype.slice.call(deck.querySelectorAll('[data-deck-video]'));
 
   if (!track || panels.length < 2) return;
 
@@ -39,14 +40,20 @@
       shots.forEach(function (img) { img.style.transform = ''; });
       return;
     }
-    // One viewport of scroll per transition, plus one to read the first panel.
-    deck.style.height = (panels.length * 100) + 'vh';
+    // One viewport to read a panel, then a shorter run per transition. A full
+    // viewport each was fine at three panels; past that the section turns into
+    // a scroll tunnel, so transitions cost 70vh and the deck stays roughly the
+    // length it was.
+    deck.style.height = (100 + (panels.length - 1) * 70) + 'vh';
   }
 
   function setPinned(on) {
     if (pinned === on) return;
     pinned = on;
     deck.classList.toggle('is-pinned', on);
+    // The two modes drive playback differently, so clear the old mode's
+    // state rather than leave a clip running that nothing now owns.
+    pauseAll();
     measure();
     render();
   }
@@ -90,6 +97,61 @@
 
     if (current) current.textContent = i < 9 ? '0' + (i + 1) : String(i + 1);
     segs.forEach(function (s, n) { s.classList.toggle('is-on', n === i); });
+    syncVideo();
+  }
+
+  /* --- demo videos ------------------------------------------------------ */
+
+  // Which panel each clip belongs to, resolved once. Panels without a demo
+  // simply aren't in this list.
+  var videoPanel = videos.map(function (v) {
+    return panels.indexOf(v.closest('[data-deck-panel]'));
+  });
+  var deckOnScreen = false;
+
+  function play(v) {
+    // Autoplay is a request, not a guarantee: a browser may refuse it and
+    // reject. Unhandled, that's a console error on every panel change.
+    var started = v.play();
+    if (started && started.catch) started.catch(function () {});
+  }
+
+  function pauseAll() {
+    videos.forEach(function (v) { if (!v.paused) v.pause(); });
+  }
+
+  // Only the panel being read plays. Two portrait clips decoding at once
+  // costs battery on a phone and frame budget on the deck's own transform.
+  function syncVideo() {
+    if (!videos.length) return;
+    if (!motionOk.matches) return;   // reduced motion: controls, no autoplay
+    if (!pinned) return;             // the stack observer owns that case
+    if (!deckOnScreen) { pauseAll(); return; }
+
+    videos.forEach(function (v, n) {
+      if (videoPanel[n] === lastIndex) play(v);
+      else if (!v.paused) v.pause();
+    });
+  }
+
+  if (videos.length && window.IntersectionObserver) {
+    // Scrolling past the deck entirely should stop playback, which panel
+    // index alone can't tell us.
+    new IntersectionObserver(function (entries) {
+      deckOnScreen = entries[0].isIntersecting;
+      syncVideo();
+    }, { threshold: 0 }).observe(deck);
+
+    // Unpinned, the panels are a vertical stack and there is no active index,
+    // so each clip plays while it's the one actually on screen.
+    var stack = new IntersectionObserver(function (entries) {
+      if (pinned || !motionOk.matches) return;
+      entries.forEach(function (e) {
+        if (e.isIntersecting) play(e.target);
+        else if (!e.target.paused) e.target.pause();
+      });
+    }, { threshold: 0.6 });
+    videos.forEach(function (v) { stack.observe(v); });
   }
 
   function onScroll() {
@@ -147,6 +209,13 @@
     setPinned(canPin());
     measure();
     render();
+
+    // Reduced motion means nothing plays on its own, so the clips need a way
+    // to be played deliberately. This can flip mid-session.
+    if (!motionOk.matches) pauseAll();
+    videos.forEach(function (v) { v.controls = !motionOk.matches; });
+
+    syncVideo();
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });

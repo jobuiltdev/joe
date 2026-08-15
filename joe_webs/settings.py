@@ -145,6 +145,14 @@ STORAGES = {
     },
 }
 
+# h264 is already compressed. Without this, collectstatic writes a .gz beside
+# every clip that saves nothing and doubles what gets committed and deployed.
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = [
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz',
+    'xz', 'br', 'swf', 'flv', 'woff', 'woff2',
+    'mp4', 'm4v', 'webm', 'mov',
+]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 

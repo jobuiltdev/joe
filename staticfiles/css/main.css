@@ -1146,6 +1146,7 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 .panel__meta dt { color: var(--ink-faint); }
 .panel__meta dd { margin: 0; color: var(--ink); }
 .panel__live { color: #2f9e5f; }
+.panel__live--wip { color: var(--ink-soft); }
 
 .panel__summary {
   margin-top: clamp(0.75rem, min(2.5vw, 2vh), 1.4rem);
@@ -1208,7 +1209,6 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 /* Source links get their own row so a project with two builds doesn't wrap
    its four links into a ragged block. */
 .panel__links--repos { margin-top: 0.75rem; gap: clamp(0.85rem, 2.5vw, 1.5rem); }
-.panel__links--repos:empty { display: none; }
 
 /* Source sits a step quieter than the live links: the demo is the headline,
    the repo is for whoever wants to read it. */
@@ -1231,6 +1231,84 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
   height: auto;
   border: 1px solid var(--rule);
   background: var(--paper);
+}
+
+/* Phone demos ----------------------------------------------------------- */
+
+/* The two mobile apps are portrait screen recordings, so they get a device
+   frame instead of the landscape plate the web projects use. Sized from its
+   height, not its width: in a wide panel the height is what's scarce, and a
+   9:20 clip fitted to the column width would tower off the screen. */
+.panel__phone {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.panel__phone-body {
+  padding: 0.4rem;
+  border-radius: 1.9rem;
+  /* Dark, like the hero's IDE card. Deliberately the same move: a screen is
+     the one object on this paper that should read as lit rather than printed. */
+  background: #17161a;
+  box-shadow:
+    0 0 0 1px var(--rule-strong),
+    0 1.5rem 2.5rem -1.25rem rgb(0 0 0 / 0.35);
+}
+
+.panel__video {
+  display: block;
+  height: clamp(15rem, 42vh, 25rem);
+  width: auto;
+  aspect-ratio: 288 / 640;
+  border-radius: 1.55rem;
+  background: #000;
+  object-fit: cover;
+}
+
+.panel__phone-cap {
+  font-size: var(--t-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Awaiting media -------------------------------------------------------- */
+
+/* A project can ship before its screenshot does. This holds the column's
+   weight so the panel doesn't look half-built, and reads as typography
+   rather than as a broken image. */
+.panel__plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  aspect-ratio: 16 / 10;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--rule);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 10px,
+      var(--rule) 10px 11px
+    );
+}
+.panel__plate-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, min(2.2vw, 3.4vh), 2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink-soft);
+}
+.panel__plate-kind {
+  font-size: var(--t-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 /* Pinned mode ----------------------------------------------------------- */
@@ -1267,6 +1345,11 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 }
 .work.is-pinned .panel__shot img { max-height: 38vh; object-fit: cover; }
 
+/* Pinned panels get exactly one viewport, so the media is capped against the
+   viewport height rather than allowed to set the panel's height. */
+.work.is-pinned .panel__video { height: min(44vh, 23rem); }
+.work.is-pinned .panel__plate { max-height: 38vh; }
+
 .work.is-pinned .work__head { padding-block: clamp(0.85rem, 2.2vh, 1.5rem) 0.75rem; }
 .work.is-pinned .work__head .section__title {
   font-size: clamp(1.375rem, min(2.4vw, 4.2vh), 2.25rem);
@@ -1283,6 +1366,9 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 @media (max-height: 780px) {
   .work.is-pinned .panel__features li { font-size: 0.875rem; }
   .work.is-pinned .panel__tech li { padding: 0.3em 0.65em; }
+  /* The caption is the first thing that can go without losing meaning, and
+     dropping it buys the frame back the height it costs. */
+  .work.is-pinned .panel__phone-cap { display: none; }
 }
 
 /* Unpinned (mobile, reduced motion, no JS): plain vertical stack --------- */
@@ -1294,13 +1380,17 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
   padding-bottom: clamp(3rem, 8vw, 5rem);
 }
 .work:not(.is-pinned) .panel { scroll-margin-top: var(--bar-h); }
-.work:not(.is-pinned) .panel__shot { margin-top: 1.5rem; }
+.work:not(.is-pinned) .panel__shot,
+.work:not(.is-pinned) .panel__phone,
+.work:not(.is-pinned) .panel__plate { margin-top: 1.5rem; }
 
 @media (min-width: 48rem) {
   .work:not(.is-pinned) .panel__inner {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
-  .work:not(.is-pinned) .panel__shot { margin-top: 0; }
+  .work:not(.is-pinned) .panel__shot,
+  .work:not(.is-pinned) .panel__phone,
+  .work:not(.is-pinned) .panel__plate { margin-top: 0; }
 }
 
 /* ==========================================================================

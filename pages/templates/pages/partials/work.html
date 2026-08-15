@@ -30,7 +30,10 @@
               <dl class="panel__meta mono">
                 <div><dt>Role</dt><dd>{{ p.role }}</dd></div>
                 <div><dt>Year</dt><dd>{{ p.year }}</dd></div>
-                <div><dt>Status</dt><dd class="panel__live">{{ p.status }}</dd></div>
+                {# Only a shipped project gets the green. #}
+                <div><dt>Status</dt>
+                  <dd class="panel__live{% if p.status != 'live' %} panel__live--wip{% endif %}">{{ p.status }}</dd>
+                </div>
               </dl>
 
               <p class="panel__summary">{{ p.summary }}</p>
@@ -40,20 +43,53 @@
               </ul>
             </div>
 
-            {# Tech and links ride with the image so the columns balance. #}
+            {# Tech and links ride with the media so the columns balance. #}
             <div class="panel__side">
-              <figure class="panel__shot" data-deck-parallax>
-                <picture>
-                  <source srcset="{% static p.image|add:'.webp' %}" type="image/webp">
-                  <img src="{% static p.image|add:'.jpg' %}" loading="lazy" decoding="async"
-                       alt="{{ p.image_alt }}">
-                </picture>
-              </figure>
+              {% comment %}
+              Media is optional and the three cases are mutually exclusive.
+              This has to stay a branch rather than a hidden element: under
+              manifest static storage the static tag raises for a file that
+              isn't in the manifest, so emitting one for absent media would
+              500 the whole page rather than leave a gap.
+              {% endcomment %}
+              {% if p.video %}
+                <figure class="panel__phone">
+                  <div class="panel__phone-body">
+                    <video class="panel__video" data-deck-video
+                           poster="{% static p.video|add:'.jpg' %}"
+                           muted loop playsinline preload="metadata"
+                           aria-label="{{ p.media_alt }}">
+                      <source src="{% static p.video|add:'.mp4' %}" type="video/mp4">
+                    </video>
+                  </div>
+                  <figcaption class="panel__phone-cap mono">Screen recording</figcaption>
+                </figure>
+              {% elif p.image %}
+                <figure class="panel__shot" data-deck-parallax>
+                  <picture>
+                    <source srcset="{% static p.image|add:'.webp' %}" type="image/webp">
+                    <img src="{% static p.image|add:'.jpg' %}" loading="lazy" decoding="async"
+                         alt="{{ p.media_alt }}">
+                  </picture>
+                </figure>
+              {% else %}
+                <div class="panel__plate" aria-hidden="true">
+                  <span class="panel__plate-name">{{ p.name }}</span>
+                  <span class="panel__plate-kind mono">{{ p.kind }}</span>
+                </div>
+              {% endif %}
 
               <ul class="panel__tech mono">
                 {% for t in p.tech %}<li>{{ t }}</li>{% endfor %}
               </ul>
 
+              {% comment %}
+              Both rows are conditional rather than left to collapse on their
+              own. A mobile app has no site to visit and a private repo has no
+              source to read, and an empty row still spends its margin, which
+              reads as something that failed to load.
+              {% endcomment %}
+              {% if p.links %}
               <div class="panel__links">
                 {% for l in p.links %}
                   <a class="ln panel__link" href="{{ l.url }}" target="_blank" rel="noopener noreferrer">
@@ -65,7 +101,9 @@
                   </a>
                 {% endfor %}
               </div>
+              {% endif %}
 
+              {% if p.repos %}
               <div class="panel__links panel__links--repos">
                 {% for r in p.repos %}
                   <a class="ln panel__link panel__link--repo" href="{{ r.url }}"
@@ -85,6 +123,7 @@
                   </a>
                 {% endfor %}
               </div>
+              {% endif %}
             </div>
 
           </div>
