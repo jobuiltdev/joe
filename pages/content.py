@@ -163,6 +163,32 @@ PROJECTS = [
         "status": "in development",
     },
     {
+        "slug": "sync",
+        "name": "Sync",
+        "kind": "On-demand services marketplace",
+        "year": "2026",
+        "role": "Full-stack",
+        "summary": (
+            "A marketplace connecting customers with local providers for "
+            "dispatch, cleaning, errands, home services, beauty and laundry. "
+            "Two sides of the same app: customers book, providers onboard, "
+            "set their areas and get paid."
+        ),
+        "features": [
+            "Customer and provider roles in one Expo app",
+            "Provider onboarding, verification and service areas",
+            "Bookings with saved addresses and job tracking",
+            "OTP authentication and payouts to bank accounts",
+        ],
+        "tech": ["Django", "DRF", "PostgreSQL", "Expo", "React Native", "OTP auth"],
+        "video": "video/sync-demo",
+        "media_alt": "Screen recording of the Sync services marketplace app",
+        "links": [],
+        # Private repository, so no source link.
+        "repos": [],
+        "status": "in development",
+    },
+    {
         "slug": "marketbrainers",
         "name": "MarketBrainers",
         "kind": "Marketing agency platform",
