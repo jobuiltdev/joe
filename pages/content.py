@@ -230,9 +230,12 @@ PROJECTS = [
             "User management with bulk actions and filtered search",
         ],
         "tech": ["Django", "DRF", "PostgreSQL", "Next.js", "TypeScript", "pandas"],
-        # Awaiting a screenshot, so the panel renders its typographic plate.
-        "image": "",
-        "media_alt": "The RBAD admin dashboard",
+        # The permission matrix, since role-based access is the headline here
+        # and this is the one view that shows it as working UI rather than a
+        # claim. The audit timeline is the other candidate, currently too thin
+        # to be worth the panel.
+        "image": "images/rbad",
+        "media_alt": "The RBAD dashboard showing a manager's permission matrix",
         # The repo's own homepage field points at a deployment that 404s; this
         # is the one that answers.
         "links": [
