@@ -1248,6 +1248,7 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
 }
 
 .panel__phone-body {
+  position: relative;
   padding: 0.4rem;
   border-radius: 1.9rem;
   /* Dark, like the hero's IDE card. Deliberately the same move: a screen is
@@ -1266,6 +1267,44 @@ html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale
   border-radius: 1.55rem;
   background: #000;
   object-fit: cover;
+}
+
+/* Autoplay is a request, not a guarantee, and phones refuse it often enough
+   that it cannot be the only way in. The frame always carries a play control
+   and hides it only while the clip is actually running, so a refused autoplay
+   degrades to a tap rather than to a still image that does nothing. */
+.panel__play {
+  position: absolute;
+  inset: 0.4rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 1.55rem;
+  background: rgb(0 0 0 / 0.3);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+.panel__play span {
+  display: grid;
+  place-items: center;
+  /* Comfortably past the 44px minimum tap target. */
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  color: #17161a;
+  /* The glyph is a triangle, which reads as off-centre when truly centred. */
+  padding-left: 0.15rem;
+}
+.panel__play:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: -4px;
+}
+.panel__phone.is-playing .panel__play {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .panel__phone-cap {

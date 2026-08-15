@@ -110,11 +110,36 @@
   var deckOnScreen = false;
 
   function play(v) {
-    // Autoplay is a request, not a guarantee: a browser may refuse it and
-    // reject. Unhandled, that's a console error on every panel change.
+    // Autoplay is a request, not a guarantee: Low Power Mode, a data saver or
+    // a per-site policy can refuse it, and the rejection is the only signal we
+    // get. Swallowing it silently is what left phones showing a dead poster,
+    // so the frame keeps its play button and the refusal just means the button
+    // stays up for the user to tap.
     var started = v.play();
     if (started && started.catch) started.catch(function () {});
   }
+
+  videos.forEach(function (v) {
+    // iOS gates inline autoplay on the muted property, not only the attribute.
+    // Setting it explicitly removes a class of works-everywhere-but-the-phone
+    // failures that are invisible on a desktop.
+    v.muted = true;
+
+    var frame = v.closest('.panel__phone');
+    if (!frame) return;
+
+    // Driven by what the element actually does, not by what we asked it to do.
+    v.addEventListener('playing', function () { frame.classList.add('is-playing'); });
+    v.addEventListener('pause', function () { frame.classList.remove('is-playing'); });
+
+    var btn = frame.querySelector('[data-deck-play]');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      // A tap is a user gesture, so this is the one call that is never
+      // refused. It is the guaranteed path wherever autoplay is blocked.
+      if (v.paused) play(v); else v.pause();
+    });
+  });
 
   function pauseAll() {
     videos.forEach(function (v) { if (!v.paused) v.pause(); });
@@ -124,8 +149,9 @@
   // costs battery on a phone and frame budget on the deck's own transform.
   function syncVideo() {
     if (!videos.length) return;
-    if (!motionOk.matches) return;   // reduced motion: controls, no autoplay
-    if (!pinned) return;             // the stack observer owns that case
+    // Pinning already requires motion to be allowed, so getting this far means
+    // autoplay is welcome. The stack observer owns the unpinned case.
+    if (!pinned) return;
     if (!deckOnScreen) { pauseAll(); return; }
 
     videos.forEach(function (v, n) {
@@ -145,10 +171,16 @@
     // Unpinned, the panels are a vertical stack and there is no active index,
     // so each clip plays while it's the one actually on screen.
     var stack = new IntersectionObserver(function (entries) {
-      if (pinned || !motionOk.matches) return;
+      if (pinned) return;
       entries.forEach(function (e) {
-        if (e.isIntersecting) play(e.target);
-        else if (!e.target.paused) e.target.pause();
+        // Leaving the screen always stops a clip, including one the user
+        // started by hand under reduced motion. Only the starting is
+        // conditional on the preference.
+        if (!e.isIntersecting) {
+          if (!e.target.paused) e.target.pause();
+        } else if (motionOk.matches) {
+          play(e.target);
+        }
       });
     }, { threshold: 0.6 });
     videos.forEach(function (v) { stack.observe(v); });
@@ -210,10 +242,11 @@
     measure();
     render();
 
-    // Reduced motion means nothing plays on its own, so the clips need a way
-    // to be played deliberately. This can flip mid-session.
+    // Reduced motion means nothing starts on its own. The play button is
+    // always there, so a deliberate tap is still a way in, and user-initiated
+    // playback is not what the preference is asking us to suppress. This can
+    // flip mid-session.
     if (!motionOk.matches) pauseAll();
-    videos.forEach(function (v) { v.controls = !motionOk.matches; });
 
     syncVideo();
   }

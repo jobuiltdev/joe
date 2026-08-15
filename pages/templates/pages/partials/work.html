@@ -61,6 +61,22 @@
                            aria-label="{{ p.media_alt }}">
                       <source src="{% static p.video|add:'.mp4' %}" type="video/mp4">
                     </video>
+
+                    {% comment %}
+                    Phones refuse autoplay routinely: Low Power Mode, data
+                    savers, per-site policy. A tap is a user gesture, so this
+                    always works where autoplay doesn't. It hides itself once
+                    the clip is genuinely running.
+                    {% endcomment %}
+                    <button class="panel__play" type="button" data-deck-play
+                            aria-label="Play the {{ p.name }} demo">
+                      <span>
+                        <svg viewBox="0 0 24 24" width="20" height="20"
+                             fill="currentColor" aria-hidden="true">
+                          <path d="M8 5.5v13l11-6.5z"/>
+                        </svg>
+                      </span>
+                    </button>
                   </div>
                   <figcaption class="panel__phone-cap mono">Screen recording</figcaption>
                 </figure>
