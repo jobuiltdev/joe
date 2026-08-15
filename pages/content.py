@@ -73,9 +73,19 @@ STACK = [
     {"name": "Tailwind", "note": "ui"},
 ]
 
-# Each project may carry "repos": a list of {label, url}. Crownie has one per
-# build, so this is a list rather than a single URL. An empty list renders no
-# source link at all, so a half-filled entry never ships a dead link.
+# Media on a panel is optional and comes in three shapes, checked in this
+# order by the template: "video" (a portrait screen recording, for the mobile
+# apps), then "image", then neither, which renders a typographic plate. Paths
+# are extension-less: the template appends .mp4/.jpg for video and .webp/.jpg
+# for images.
+#
+# "repos" is a list of {label, url}. Crownie has one per build, so a list
+# rather than a single URL, and an empty list renders no source link at all.
+# That matters for the private repos: a link a visitor can only 404 on is
+# worse than no link.
+#
+# "status" is free text. Anything other than "live" is styled as in-progress
+# rather than green.
 PROJECTS = [
     {
         "slug": "vaultor",
@@ -96,11 +106,61 @@ PROJECTS = [
         ],
         "tech": ["Django", "DRF", "PostgreSQL", "Next.js", "TypeScript", "Solana"],
         "image": "images/vaultor",
-        "image_alt": "The Vaultor prediction market platform",
+        "media_alt": "The Vaultor prediction market platform",
         # The apex redirects to www, so link www directly and skip the hop.
         "links": [{"label": "Visit site", "url": "https://www.vaultor.org"}],
         "repos": [{"label": "Source", "url": "https://github.com/zazajo/vaultor"}],
         "status": "live",
+    },
+    {
+        "slug": "quanta",
+        "name": "Quanta",
+        "kind": "Adaptive learning workspace",
+        "year": "2026",
+        "role": "Full-stack",
+        "summary": (
+            "An AI-assisted study app built as a Django REST API with an Expo "
+            "client. It turns uploaded material into guided paths, schedules "
+            "review from how well you actually recall a topic, and maps what "
+            "you have learned as a memory constellation."
+        ),
+        "features": [
+            "Guided study paths generated from uploaded documents",
+            "Spaced repetition scheduled from recall performance",
+            "AI tutor and generated quizzes per topic",
+            "Versioned REST API with pagination and an error envelope",
+        ],
+        "tech": ["Django", "DRF", "PostgreSQL", "Expo", "React Native", "TypeScript"],
+        "video": "video/quanta-demo",
+        "media_alt": "Screen recording of the Quanta learning app",
+        "links": [],
+        # Private repository, so no source link.
+        "repos": [],
+        "status": "in development",
+    },
+    {
+        "slug": "spendwise",
+        "name": "SpendWise",
+        "kind": "Personal finance app",
+        "year": "2026",
+        "role": "Full-stack",
+        "summary": (
+            "Expense tracking and budgeting as a Django REST API with an Expo "
+            "client. It handles recurring transactions, splits group expenses "
+            "between people, and settles up the balances that fall out of it."
+        ),
+        "features": [
+            "JWT auth with rotating, blacklisted refresh tokens",
+            "Budgets, recurring transactions and spending analysis",
+            "Group expenses with flexible splitting and settlements",
+            "Financial reports and data export",
+        ],
+        "tech": ["Django", "DRF", "PostgreSQL", "Expo", "React Native", "TypeScript"],
+        "video": "video/spendwise-demo",
+        "media_alt": "Screen recording of the SpendWise finance app",
+        "links": [],
+        "repos": [{"label": "Source", "url": "https://github.com/zazajo/spendwise"}],
+        "status": "in development",
     },
     {
         "slug": "marketbrainers",
@@ -121,9 +181,38 @@ PROJECTS = [
         ],
         "tech": ["Django", "Python", "PostgreSQL", "CMS", "SEO"],
         "image": "images/marketbrainers",
-        "image_alt": "The MarketBrainers marketing agency website",
+        "media_alt": "The MarketBrainers marketing agency website",
         "links": [{"label": "Visit site", "url": "https://www.marketbrainer.org"}],
         "repos": [{"label": "Source", "url": "https://github.com/zazajo/marketbrainers"}],
+        "status": "live",
+    },
+    {
+        "slug": "rbad",
+        "name": "RBAD",
+        "kind": "Role-based admin dashboard",
+        "year": "2026",
+        "role": "Full-stack",
+        "summary": (
+            "An administrative dashboard for teams that need to see who did "
+            "what. Three roles with granular permissions, bulk data ingestion "
+            "from spreadsheets, and an audit trail behind every change."
+        ),
+        "features": [
+            "Role-based access control across admin, manager and viewer",
+            "CSV and Excel upload with row-by-row validation",
+            "Audit trail recording before and after values",
+            "User management with bulk actions and filtered search",
+        ],
+        "tech": ["Django", "DRF", "PostgreSQL", "Next.js", "TypeScript", "pandas"],
+        # Awaiting a screenshot, so the panel renders its typographic plate.
+        "image": "",
+        "media_alt": "The RBAD admin dashboard",
+        # The repo's own homepage field points at a deployment that 404s; this
+        # is the one that answers.
+        "links": [
+            {"label": "Visit site", "url": "https://admin-dashboard-main-nu.vercel.app"}
+        ],
+        "repos": [{"label": "Source", "url": "https://github.com/zazajo/admin-dashboard"}],
         "status": "live",
     },
     {
@@ -145,7 +234,7 @@ PROJECTS = [
         ],
         "tech": ["Django", "Next.js", "React", "TypeScript", "PostgreSQL", "Discord API"],
         "image": "images/crownie-nextjs",
-        "image_alt": "The Crownie coin launch platform",
+        "media_alt": "The Crownie coin launch platform",
         "links": [
             # No www: the apex domain is the only one that resolves.
             {"label": "Django build", "url": "https://crownieverse.xyz"},
@@ -155,6 +244,30 @@ PROJECTS = [
             {"label": "Django source", "url": "https://github.com/zazajo/crw-landing"},
             {"label": "Next.js source", "url": "https://github.com/zazajo/crownie-landing"},
         ],
+        "status": "live",
+    },
+    {
+        "slug": "spooky",
+        "name": "Spooky’s Y2K Rave",
+        "kind": "Event ticketing platform",
+        "year": "2025",
+        "role": "Full-stack",
+        "summary": (
+            "Ticketing for a live rave, built to take real money on the night. "
+            "Paystack handles checkout, and a successful payment issues a "
+            "QR-coded ticket the door can scan."
+        ),
+        "features": [
+            "Secure ticket purchase through Paystack",
+            "QR-coded tickets generated as PDFs after payment",
+            "Account handling and registration with allauth",
+            "Responsive event pages for desktop and mobile",
+        ],
+        "tech": ["Django", "Python", "Paystack", "PostgreSQL", "qrcode", "ReportLab"],
+        "image": "images/party-ticketing",
+        "media_alt": "The Spooky’s Y2K Rave ticketing site",
+        "links": [{"label": "Visit site", "url": "https://pancakejo.pythonanywhere.com"}],
+        "repos": [{"label": "Source", "url": "https://github.com/zazajo/spooky"}],
         "status": "live",
     },
 ]
