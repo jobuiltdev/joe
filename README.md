@@ -61,12 +61,40 @@ static/js/                        intro.js, nav.js, deck.js, site.js
 
 ### Adding a project
 
-Append a dict to `PROJECTS` in `pages/content.py` and drop
-`<slug>.webp` + `<slug>.jpg` into `static/images/`. The deck picks it up, and the
+Append a dict to `PROJECTS` in `pages/content.py`. The deck picks it up, and the
 panel count, counter and progress segments are all derived.
+
+Media is optional, and the panel takes whichever of these it finds first:
+
+- `"video": "video/<slug>-demo"` for the mobile apps. Needs `<slug>-demo.mp4`
+  plus a `<slug>-demo.jpg` poster in `static/video/`. Renders in a phone frame,
+  and only the panel you're looking at plays.
+- `"image": "images/<slug>"` for everything else. Needs `<slug>.webp` and
+  `<slug>.jpg` in `static/images/`.
+- Neither, which renders a typographic plate so a project can ship before its
+  screenshot does.
+
+`links` and `repos` are both lists and both may be empty: a mobile app has no
+site to visit, and a private repo has no source worth linking to a 404.
 
 Images are committed pre-optimized (resized to display size, webp + jpg pairs,
 lowercase names because Vercel's filesystem is case-sensitive).
+
+### Adding a demo video
+
+Screen recordings go through ffmpeg first. Audio is stripped since the clips
+autoplay muted, and `+faststart` puts the index at the front so playback can
+begin before the whole file arrives:
+
+```bash
+ffmpeg -i raw.mp4 -an -c:v libx264 -profile:v main -pix_fmt yuv420p \
+  -crf 30 -preset veryslow -movflags +faststart static/video/<slug>-demo.mp4
+ffmpeg -ss 5 -i static/video/<slug>-demo.mp4 -frames:v 1 -q:v 5 \
+  static/video/<slug>-demo.jpg
+```
+
+That took the two current demos from 8.1 MB to 1.2 MB with the UI text still
+legible. Check the poster frame actually shows something worth looking at.
 
 ## Deploying
 
@@ -83,6 +111,12 @@ builder runs no build step of its own. If you change CSS or JS and forget to
 re-run it, `{% static %}` will raise for the missing manifest entry.
 
 `RESEND_API_KEY` must be set as an environment variable in the Vercel dashboard.
+
+`vercel.json` routes `/static/*` to Vercel's static layer rather than through
+the Python function. Everything under `/static/` is content-hashed, so it is
+served `immutable` with a one year cache. Without that route the video would
+stream out of the lambda on every view, which costs a cold start, forfeits CDN
+caching and pushes against the function response size limit.
 
 ## Known issues
 
