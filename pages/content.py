@@ -293,8 +293,11 @@ PROJECTS = [
             "Responsive event pages for desktop and mobile",
         ],
         "tech": ["Django", "Python", "Paystack", "PostgreSQL", "qrcode", "ReportLab"],
-        "image": "images/party-ticketing",
-        "media_alt": "The Spooky’s Y2K Rave ticketing site",
+        # The ticket grid rather than the hero. The hero is event artwork with
+        # the title over it, which says nothing about what was built; this
+        # shows the tiers, prices and remaining stock.
+        "image": "images/spooky",
+        "media_alt": "The Spooky’s Y2K Rave ticket tiers with prices and remaining stock",
         "links": [{"label": "Visit site", "url": "https://pancakejo.pythonanywhere.com"}],
         "repos": [{"label": "Source", "url": "https://github.com/zazajo/spooky"}],
         "status": "live",
