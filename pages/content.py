@@ -88,31 +88,6 @@ STACK = [
 # rather than green.
 PROJECTS = [
     {
-        "slug": "vaultor",
-        "name": "Vaultor",
-        "kind": "Solana presale platform",
-        "year": "2025",
-        "role": "Full-stack",
-        "summary": (
-            "The Genesis presale platform for a perception-first prediction "
-            "product. Solana wallet authentication with signature verification "
-            "on the backend, a Django REST API, and a Next.js front end."
-        ),
-        "features": [
-            "Solana wallet auth with server-side signature checks",
-            "Presale flow with referral tracking",
-            "Django REST API with generated schema docs",
-            "Roadmap, updates, FAQ and document management",
-        ],
-        "tech": ["Django", "DRF", "PostgreSQL", "Next.js", "TypeScript", "Solana"],
-        "image": "images/vaultor",
-        "media_alt": "The Vaultor prediction market platform",
-        # The apex redirects to www, so link www directly and skip the hop.
-        "links": [{"label": "Visit site", "url": "https://www.vaultor.org"}],
-        "repos": [{"label": "Source", "url": "https://github.com/zazajo/vaultor"}],
-        "status": "live",
-    },
-    {
         "slug": "quanta",
         "name": "Quanta",
         "kind": "Adaptive learning workspace",
@@ -187,6 +162,31 @@ PROJECTS = [
         # Private repository, so no source link.
         "repos": [],
         "status": "in development",
+    },
+    {
+        "slug": "vaultor",
+        "name": "Vaultor",
+        "kind": "Solana presale platform",
+        "year": "2025",
+        "role": "Full-stack",
+        "summary": (
+            "The Genesis presale platform for a perception-first prediction "
+            "product. Solana wallet authentication with signature verification "
+            "on the backend, a Django REST API, and a Next.js front end."
+        ),
+        "features": [
+            "Solana wallet auth with server-side signature checks",
+            "Presale flow with referral tracking",
+            "Django REST API with generated schema docs",
+            "Roadmap, updates, FAQ and document management",
+        ],
+        "tech": ["Django", "DRF", "PostgreSQL", "Next.js", "TypeScript", "Solana"],
+        "image": "images/vaultor",
+        "media_alt": "The Vaultor prediction market platform",
+        # The apex redirects to www, so link www directly and skip the hop.
+        "links": [{"label": "Visit site", "url": "https://www.vaultor.org"}],
+        "repos": [{"label": "Source", "url": "https://github.com/zazajo/vaultor"}],
+        "status": "live",
     },
     {
         "slug": "marketbrainers",
