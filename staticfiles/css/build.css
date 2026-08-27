@@ -1,0 +1,801 @@
+/* ==========================================================================
+   Build Space
+
+   Its own sheet, loaded only where it is used. Nothing here leaks into the
+   other stylesheets and nothing there needs to know this exists, so the
+   legacy landing can stay exactly as it is while this is being built.
+
+   Every colour is an existing token. The Build Space is a new composition,
+   not a new palette.
+
+   Two layouts, not one that shrinks: a constellation above 60rem, an ordered
+   vertical map below it. The breakpoint is where nodes would start to overlap
+   into unreachable tap targets.
+   ========================================================================== */
+
+.build {
+  /* One motion vocabulary for the whole stage.
+
+     Enter and leave are deliberately asymmetric: opening is unhurried and
+     eased out, closing is quicker and flatter. Sweeping a pointer across the
+     field therefore settles rather than strobes, which is most of what made
+     the earlier version feel twitchy.
+
+     --b-hold is the delay before a preview commits. Short enough to feel
+     immediate on a deliberate hover, long enough that crossing three nodes on
+     the way somewhere does not open three panels. */
+  --b-ease:     cubic-bezier(0.22, 1, 0.36, 1);
+  --b-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --b-quick:    180ms;
+  --b-base:     340ms;
+  --b-slow:     560ms;
+  --b-hold:     90ms;
+  /* The pointer follow lags everything else on purpose: it is ambience,
+     not feedback, and it should never look like it is tracking you. */
+  --b-drift:    900ms;
+
+  position: relative;
+  /* One viewport, not a synthetic scroll distance. The page continues
+     normally underneath. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(var(--bar-h) + 2rem) var(--gutter) 4rem;
+  overflow: hidden;
+  /* Content changing above the fold has bitten this codebase before; the
+     browser must not try to compensate for it here. */
+  overflow-anchor: none;
+}
+
+/* Identity ---------------------------------------------------------------- */
+
+/* Stage stacking, decided in one place rather than patched per element:
+
+     1  field        grid and wires
+     2  nodes        at rest, behind the name
+     3  identity     the name owns the middle while nothing is open
+     4  nodes        while a project is active, the map comes forward
+
+   The layer moves, not the panel. .build__nodes is a stacking context, so a
+   z-index on a preview inside it can never lift the preview past the name
+   however large it is — which is exactly why previews were rendering behind
+   the identity. Raising the layer is the only fix that actually works, and
+   raising it wholesale keeps the map coherent instead of tearing one node
+   out of it. */
+.build__identity {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  margin-inline: auto;
+  max-width: 46rem;
+  /* Nothing in the field should be clickable through the name, but the name
+     itself is not interactive either. */
+  pointer-events: none;
+  transition: opacity var(--b-slow) var(--b-ease),
+              transform var(--b-slow) var(--b-ease),
+              filter var(--b-slow) var(--b-ease);
+}
+
+/* Recedes while a project is open. Not hidden: it stays legible, stays the
+   largest thing on the stage, and comes straight back. */
+[data-build].has-active .build__identity {
+  opacity: 0.26;
+  transform: scale(0.986);
+}
+
+.build__eyebrow { color: var(--ink-faint); margin-bottom: clamp(1rem, 3vh, 2rem); }
+
+.build__name {
+  font-family: var(--font-display);
+  /* The anchor of the frame: larger than anything else on screen and not
+     competing with a node for attention.
+
+     Height is inside the expression rather than in a media query further
+     down. A short viewport needs a smaller name, but the previous version
+     handled that by dropping to a 5rem cap, which rendered 80px on an
+     ordinary 1366x768 laptop — smaller than the hero this replaced. Taking
+     the lower of a width term and a height term keeps the name proportionate
+     to whichever dimension is actually scarce, and never collapses it. */
+  font-size: clamp(2.75rem, min(10.5vw, 17vh), 8.5rem);
+  font-weight: 600;
+  line-height: 0.84;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+.build__name span { display: block; }
+
+.build__role {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.0625rem, 0.9rem + 0.7vw, 1.5rem);
+  color: var(--ink-soft);
+  margin-top: clamp(0.4rem, 1.2vh, 0.9rem);
+}
+
+.build__lede {
+  max-width: 34ch;
+  margin: clamp(0.75rem, 2vh, 1.25rem) auto 0;
+  color: var(--ink-faint);
+  font-size: 0.9375rem;
+}
+
+/* Connections ------------------------------------------------------------- */
+
+.build__field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* The ground.
+
+   Without one the nodes sit on bare paper and read as captions arranged
+   around a heading. A measured grid says the space is plotted rather than
+   decorated, and it is the cheapest way to say it: two gradients, no image,
+   no element per line. Masked to an ellipse so it never reaches the edges of
+   the stage, where it would turn into a border. */
+.build__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--rule) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
+  background-size: 104px 104px;
+  opacity: 0.4;
+  -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 35%, transparent 100%);
+  transition: opacity var(--b-slow) var(--b-ease),
+              background-size var(--b-slow) var(--b-ease);
+}
+
+.build__wires { width: 100%; height: 100%; position: relative; }
+
+.build__wire {
+  stroke: var(--rule);
+  stroke-width: 1;
+  /* Background in Experience Mode: present, not asserted. */
+  opacity: 0.5;
+  transition: opacity var(--b-base) var(--b-ease), stroke var(--b-base) var(--b-ease),
+              stroke-width var(--b-base) var(--b-ease);
+}
+/* The three lines out of the core carry the composition; the rest are
+   structure behind it. */
+.build__wire[data-tier="secondary"] { opacity: 0.28; }
+
+/* --- Engineering Mode ----------------------------------------------------
+   The lens has to be legible before anything is hovered. Previously the only
+   at-rest difference was the wire dash, which made the two modes almost
+   indistinguishable on load. The environment itself now changes: the grid
+   subdivides and comes forward, the connections become explicit structure,
+   and the product surface steps back. */
+
+[data-mode="engineering"] .build__grid {
+  /* Subdivided, not merely darker: a finer measure reads as a technical
+     drawing rather than as the same drawing turned up. */
+  background-size: 52px 52px;
+  opacity: 0.85;
+}
+
+[data-mode="engineering"] .build__wire {
+  stroke: var(--rule-strong);
+  opacity: 0.9;
+}
+[data-mode="engineering"] .build__wire[data-tier="primary"] { stroke-width: 1.5; }
+[data-mode="engineering"] .build__wire[data-tier="secondary"] {
+  opacity: 0.6;
+  stroke-dasharray: 3 4;
+}
+
+.build__wire.is-lit {
+  stroke: var(--accent);
+  opacity: 1;
+  stroke-width: 1.5;
+  stroke-dasharray: none;
+}
+
+/* Nodes ------------------------------------------------------------------- */
+
+.build__nodes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+[data-build].has-active .build__nodes { z-index: 4; }
+/* And within the layer, the open one sits above its neighbours. */
+.build__node.is-active { z-index: 1; }
+
+/* The coordinate space is the part of the stage a node can actually occupy,
+   which is not the whole section.
+
+   The rail floats over the right edge and the bar over the top, so both are
+   subtracted here rather than being avoided by hand in layout.py. Before this
+   the topmost node printed underneath the mode switch, and the percentages in
+   layout.py had to silently mean "of the section, minus whatever chrome
+   happens to be in the way". Now they mean the usable field. */
+.build__field,
+.build__nodes {
+  top: calc(var(--bar-h) - 0.5rem);
+  bottom: 2.25rem;
+}
+
+@media (min-width: 56rem) {
+  .build__field,
+  .build__nodes { right: 5.5rem; }
+}
+
+.build__node {
+  position: absolute;
+  left: calc(var(--nx) * 1%);
+  top: calc(var(--ny) * 1%);
+  /* The dot is the anchor point; the label hangs off it. */
+  transform: translate(-50%, -50%);
+  transition: opacity var(--b-base) var(--b-ease);
+}
+
+.build__hit {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* A real target, not a 6px dot. */
+  min-height: 2.75rem;
+  padding: 0.35rem 0.6rem;
+  text-decoration: none;
+  color: var(--ink);
+  white-space: nowrap;
+  border-radius: 999px;
+  transition: background var(--b-base) var(--b-ease),
+              transform var(--b-base) var(--b-ease-out);
+}
+
+/* Tiering.
+
+   The audit measured the previous separation at a 1.32x type step with both
+   tiers set in the same ink, which is not a hierarchy — it reads as eight
+   labels, three of them slightly larger. The lead work now separates on four
+   axes at once (size, weight of colour, dot mass, and a product thumbnail
+   only it carries), and the secondary work genuinely recedes without ever
+   dropping below a comfortable reading size or a 44px target. */
+
+.build__dot {
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--rule-strong);
+  transition: background var(--b-base) var(--b-ease), transform var(--b-base) var(--b-ease-out),
+              box-shadow var(--b-base) var(--b-ease);
+}
+.build__node--primary .build__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  background: var(--ink);
+  /* A held ring rather than a glow: it reads as a plotted point. */
+  box-shadow: 0 0 0 4px var(--paper), 0 0 0 5px var(--rule-strong);
+}
+
+.build__label { display: flex; flex-direction: column; gap: 0.1rem; }
+
+.build__project {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  transition: color var(--b-base) var(--b-ease);
+}
+.build__node--primary .build__project {
+  font-size: clamp(1.25rem, 1rem + 0.85vw, 1.75rem);
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+.build__kind {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  line-height: 1.2;
+}
+.build__node--primary .build__kind { font-size: 0.8125rem; color: var(--ink-soft); }
+
+/* Hovering or focusing any node brings it fully forward, so a secondary
+   project is never harder to read than a primary one once it is the subject. */
+.build__node.is-active .build__project { color: var(--ink); }
+
+/* Experience Mode's product cue. Only the lead work carries one. */
+.build__thumb {
+  flex: none;
+  width: 1.85rem;
+  aspect-ratio: 9 / 16;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--paper-sunk);
+  transition: transform var(--b-base) var(--b-ease-out), border-color var(--b-base) var(--b-ease);
+}
+.build__thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.build__node.is-active .build__thumb {
+  transform: scale(1.06);
+  border-color: var(--rule-strong);
+}
+
+/* The local composition change. The active node gains weight, the others give
+   way, and the map stays recognisable rather than rearranging. */
+[data-build].has-active .build__node { opacity: 0.32; }
+[data-build].has-active .build__node.is-active { opacity: 1; }
+
+.build__node.is-active .build__dot {
+  background: var(--accent);
+  transform: scale(1.35);
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+/* The open node advances: a small lift and a raised plate, so it reads as
+   having come forward out of the field rather than merely changed colour. */
+.build__node.is-active .build__hit {
+  background: var(--paper-raised);
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 1.75rem -1rem rgb(0 0 0 / 0.22);
+}
+
+.build__hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Detail panel ------------------------------------------------------------ */
+
+.build__detail {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 17rem;
+  padding: 0.75rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  /* No backdrop-filter. A blurred surface over a large composited layer is
+     what froze the renderer in the deck, and this is the same shape of risk. */
+  box-shadow: 0 1rem 2rem -0.75rem rgb(0 0 0 / 0.18);
+  opacity: 0;
+  visibility: hidden;
+  /* --shift-x / --shift-y are the clamp correction build.js measures. They
+     are folded into the same transform as the entrance offset so the two
+     cannot overwrite each other. */
+  transform: translate(var(--shift-x, 0px), calc(var(--shift-y, 0px) - 0.35rem));
+  /* Leaving: quick and flat, so the stage clears without a lag. */
+  transition: opacity var(--b-quick) var(--b-ease) 0s,
+              transform var(--b-quick) var(--b-ease) 0s,
+              visibility 0s linear var(--b-quick);
+  z-index: 4;
+}
+
+/* Arriving: held briefly, then eased out over a longer beat. The hold is what
+   stops a pointer crossing the field from flashing every panel on the way. */
+.build__node.is-active .build__detail {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(var(--shift-x, 0px), var(--shift-y, 0px));
+  transition: opacity var(--b-base) var(--b-ease-out) var(--b-hold),
+              transform var(--b-base) var(--b-ease-out) var(--b-hold),
+              visibility 0s linear var(--b-hold);
+}
+
+/* Nodes near an edge open their panel inward. Matched with ~= because the
+   corner case sets both flags in one attribute, and that is exactly the case
+   that has to work. */
+.build__node[data-edge~="right"] .build__detail { left: auto; right: 0; }
+.build__node[data-edge~="bottom"] .build__detail { top: auto; bottom: calc(100% + 10px); }
+
+.build__media { margin-bottom: 0.6rem; }
+
+.build__window { border: 1px solid var(--rule); background: var(--paper-sunk); }
+.build__window-bar {
+  display: block;
+  height: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.build__window img { width: 100%; height: auto; display: block; }
+
+.build__phone {
+  width: fit-content;
+  margin-inline: auto;
+  padding: 0.3rem;
+  border-radius: 1.1rem;
+  background: #17161a;
+  box-shadow: 0 0 0 1px var(--rule-strong);
+}
+/* When autoplay is refused the poster stays, and a play mark says the still
+   is the fallback rather than a clip that failed to load. Tapping the node
+   again retries, because activating it calls play() each time. */
+.build__phone { position: relative; }
+.build__node[data-clip="blocked"] .build__phone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.5rem 0 0.5rem 0.85rem;
+  border-color: transparent transparent transparent var(--paper);
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.5));
+  pointer-events: none;
+}
+
+.build__video {
+  display: block;
+  height: 9rem;
+  width: auto;
+  aspect-ratio: 288 / 640;
+  border-radius: 0.9rem;
+  background: #000;
+  object-fit: cover;
+}
+
+.build__meta {
+  display: flex;
+  gap: 0.75rem;
+  color: var(--ink-faint);
+  margin-bottom: 0.4rem;
+}
+.build__status { color: #2f9e5f; }
+.build__status--wip { color: var(--ink-soft); }
+
+.build__chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.build__chips li {
+  padding: 0.2em 0.5em;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 0.6875rem;
+}
+
+/* Engineering spec ---------------------------------------------------------
+   A layered read of the verified stack. The rows are the record's own layers,
+   so the panel says what the system is made of rather than restating the
+   product blurb in a different typeface. */
+
+.build__spec { display: grid; gap: 0.3rem; }
+
+.build__layer {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+  gap: 0 0.6rem;
+  margin: 0;
+  align-items: baseline;
+}
+.build__layer dt {
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  /* A hairline under the label ties the row to the grid vocabulary. */
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.1rem;
+}
+.build__layer dd {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.build__layer dd i { font-style: normal; }
+.build__layer dd i + i::before {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 0.6em;
+  margin: 0 0.4rem;
+  vertical-align: -0.02em;
+  background: var(--rule-strong);
+}
+
+/* Engineering reduces the product surface: the clip is evidence here, not
+   the subject, so it takes less of the panel and the spec takes more. */
+[data-mode="engineering"] .build__video { height: 6.5rem; }
+[data-mode="engineering"] .build__window { max-width: 11rem; margin-inline: auto; }
+
+/* Architecture satellites, from each project's own verified record. */
+.build__satellites { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.35rem; }
+.build__satellites li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+}
+.build__satellites li::before {
+  content: "";
+  width: 0.3rem;
+  height: 0.3rem;
+  background: var(--rule-strong);
+}
+.build__satellites li[data-kind="datastore"]::before { border-radius: 50%; }
+.build__satellites li[data-kind="external"]::before { transform: rotate(45deg); }
+
+.build__none { color: var(--ink-faint); }
+
+/* Pinned to the foot of the stage rather than sitting in the flow, where it
+   floated in the middle of the composition under the name. */
+.build__cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(0.75rem, 2.5vh, 2rem);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink-faint);
+  text-decoration: none;
+  transition: color var(--b-base) var(--b-ease), opacity var(--b-base) var(--b-ease);
+}
+
+/* A drawn line rather than a chevron: the same hairline vocabulary as the
+   wires and the grid, and it reads as a measure down to the next section. */
+.build__cue-rule {
+  width: 1px;
+  height: clamp(1.5rem, 4vh, 2.75rem);
+  background: linear-gradient(to bottom, transparent, var(--rule-strong));
+}
+
+.build__cue-label { display: inline-flex; align-items: baseline; gap: 0.5rem; }
+.build__cue-count {
+  font-weight: 400;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.05em 0.45em;
+  font-size: 0.9em;
+}
+
+@media (hover: hover) {
+  .build__cue:hover { color: var(--ink-soft); }
+  .build__cue:hover .build__cue-count { border-color: var(--rule-strong); }
+}
+.build__cue:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+
+/* Out of the way while a project is open: the preview is the subject then. */
+[data-build].has-active .build__cue { opacity: 0.25; }
+
+/* Lenses ------------------------------------------------------------------ */
+
+/* foundation.css already hides the inactive lens; these are the Build Space's
+   own additions on top of that, not a second implementation. */
+[data-mode="engineering"] .build__lede { color: var(--ink-soft); }
+
+/* The stack, read at rest under the project name. Set in the mono face
+   because it is machinery rather than prose, and it is what makes the lens
+   change obvious without hovering anything. */
+.build__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.45rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+  max-width: 15rem;
+}
+.build__stack i { font-style: normal; }
+/* Separated by a rule mark rather than punctuation, so the row reads as a
+   layer list instead of a sentence. */
+.build__stack i + i::before {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 0.65em;
+  margin-right: 0.45rem;
+  vertical-align: -0.05em;
+  background: var(--rule-strong);
+}
+.build__node--primary .build__stack { font-size: 0.75rem; color: var(--ink); }
+
+/* Where nothing was verified. Stated plainly and quietly, never filled in. */
+.build__unknown { color: var(--ink-faint); font-style: italic; }
+
+/* Architecture satellites, orbiting the node they belong to. Same records the
+   panel lists; surfacing them at rest is what turns Engineering Mode from a
+   restyle into a view of the system. */
+.build__orbit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  margin-top: 0.2rem;
+  max-width: 15rem;
+}
+.build__orbit i {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-style: normal;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+.build__orbit i::before {
+  content: "";
+  width: 0.3rem;
+  height: 0.3rem;
+  background: var(--rule-strong);
+}
+/* The same shape vocabulary the panel uses, so a reader learns it once. */
+.build__orbit i[data-kind="datastore"]::before { border-radius: 50%; }
+.build__orbit i[data-kind="external"]::before { transform: rotate(45deg); }
+
+/* Engineering steps the product surface back without hiding it: the map is
+   the same map, seen a different way. */
+[data-mode="engineering"] .build__node--primary .build__project {
+  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.35rem);
+}
+
+/* Ambient motion ---------------------------------------------------------- */
+
+/* A few pixels of drift, staggered so the field does not pulse in unison.
+   Felt rather than noticed, which is the whole brief for it. */
+@media (prefers-reduced-motion: no-preference) {
+  .build__node {
+    animation: build-drift 14s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -1.7s);
+  }
+  .build__node.is-active { animation-play-state: paused; }
+}
+
+@keyframes build-drift {
+  from { translate: 0 0; }
+  to   { translate: 0 -6px; }
+}
+
+/* The pointer moves the whole field a few pixels, never the nodes
+   individually, so the arrangement stays exactly as composed. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .build__field,
+  .build__nodes {
+    transform: translate3d(calc(var(--px, 0) * 1px), calc(var(--py, 0) * 1px), 0);
+    transition: transform var(--b-drift) var(--b-ease);
+  }
+}
+
+/* Mobile: an ordered map, not a squeezed constellation --------------------- */
+
+@media (max-width: 60rem) {
+  .build {
+    display: block;
+    min-height: 0;
+    padding-bottom: 2rem;
+  }
+
+  /* The wires describe a composition that no longer exists here. */
+  .build__field { display: none; }
+
+  .build__identity { text-align: left; margin-inline: 0; padding-bottom: 2rem; }
+  .build__lede { margin-inline: 0; }
+
+  .build__nodes {
+    position: static;
+    display: grid;
+    gap: 0.5rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .build__node {
+    position: static;
+    transform: none;
+    animation: none;
+    border-bottom: 1px solid var(--rule);
+    opacity: 1;
+  }
+  /* Nothing recedes on touch: every project stays equally reachable. */
+  [data-build].has-active .build__node { opacity: 1; }
+
+  /* And the identity does not recede either. Stepping the name back is a
+     composition device for the constellation, where the preview opens over
+     the middle of the stage. Here it expands inline in a list well below the
+     name, so dimming the hero buys nothing and washes it out for the whole
+     time a reader is browsing. */
+  [data-build].has-active .build__identity { opacity: 1; transform: none; }
+
+  .build__hit { padding: 0.9rem 0.25rem; min-height: 3.25rem; gap: 0.75rem; }
+  .build__node--primary .build__dot { width: 0.6rem; height: 0.6rem; box-shadow: none; }
+
+  /* The list has its own rules, so the plotted-point ring would be noise. */
+  .build__dot { width: 0.35rem; height: 0.35rem; }
+
+  /* Bigger here than on the constellation: it is the only image in the row
+     and there is width to spend once the nodes are stacked. */
+  .build__thumb { width: 2.4rem; border-radius: 0.3rem; }
+  .build__node.is-active .build__thumb { transform: none; }
+
+  /* Full width on a phone rather than the desktop's 15rem measure. */
+  .build__stack,
+  .build__orbit { max-width: none; }
+
+  /* Nothing is hidden behind a hover here, so the lead work has to hold its
+     hierarchy on type and image alone. */
+  .build__node--primary .build__project { font-size: 1.25rem; }
+  .build__project { font-size: 1rem; }
+
+  .build__detail {
+    position: static;
+    width: auto;
+    border: 0;
+    box-shadow: none;
+    background: none;
+    padding: 0 0.25rem 0.9rem;
+    /* Expanded inline rather than floated over the map. */
+    display: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  .build__node.is-active .build__detail { display: block; }
+
+  .build__phone { margin-inline: 0; }
+  .build__video { height: 11rem; }
+  .build__window { max-width: 20rem; }
+
+  .build__cue { display: none; }
+}
+
+/* Short laptop viewports. The vertical budget is reclaimed from the supporting
+   copy and the spacing around it, never from the name: the name is the one
+   thing the composition is built around, and shrinking it was what made the
+   Build Space read as smaller than the hero it replaced. */
+/* The lede is the first thing to go, and it goes early. Measured across
+   581-1200px stage heights, it is the difference between the name clearing
+   Sync and Vaultor and colliding with them: two lines of supporting copy cost
+   roughly the vertical room the composition needs at laptop heights. */
+@media (min-width: 60.01rem) and (max-height: 60rem) {
+  .build__lede { display: none; }
+  .build__role { margin-top: 0.4rem; }
+}
+
+/* Genuinely short. Everything else gives way, still not the name.
+
+   Engineering keeps its stack labels on the lead work only. Measured at
+   581px, three lines of stack under a secondary node put Vaultor into the
+   name; the lens still reads clearly from the subdivided grid, the wires and
+   the three primaries, so the quietest nodes are the right thing to trim. */
+@media (min-width: 60.01rem) and (max-height: 46rem) {
+  .build { padding-top: calc(var(--bar-h) + 0.75rem); padding-bottom: 2rem; }
+  .build__video { height: 7rem; }
+  .build__thumb { width: 1.5rem; }
+  .build__orbit { display: none; }
+  .build__node--secondary .build__stack { display: none; }
+}
+
+/* Reduced motion ---------------------------------------------------------- */
+
+/* The concept survives: the map, the hierarchy, the lenses and the detail
+   panels all stay. What goes is drift, parallax and the panel's slide. */
+@media (prefers-reduced-motion: reduce) {
+  /* Parallax lives on these two layers, and only on these two. */
+  .build__field,
+  .build__nodes { animation: none; transform: none; }
+
+  /* A node's transform is its centring, not its motion — the drift is the
+     separate `translate` property. Clearing the transform here used to move
+     every node down and right by half its own box, so reduced motion got a
+     broken composition rather than a still one. */
+  .build__node { animation: none; translate: none; }
+
+  /* The entrance offset goes; the clamp correction stays, because without it
+     a panel in a corner is clipped rather than merely unanimated. */
+  .build__detail,
+  .build__node.is-active .build__detail {
+    transition: opacity 0.01ms linear, visibility 0.01ms linear;
+    transform: translate(var(--shift-x, 0px), var(--shift-y, 0px));
+  }
+
+  /* State changes still happen; they just stop being animated. */
+  .build__identity { transition: opacity 0.01ms linear; }
+  [data-build].has-active .build__identity { transform: none; }
+  .build__node.is-active .build__hit { transform: none; }
+}
+
+/* Cross-document navigation ----------------------------------------------- */
+
+/* Progressive enhancement only. Browsers without it navigate normally, and
+   this is a plain link either way; nothing depends on it. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}

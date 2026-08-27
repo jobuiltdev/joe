@@ -1,0 +1,374 @@
+/* ==========================================================================
+   Intro: preloader, hero and the code card
+   The landing system, driven by intro.js as one choreographed sequence.
+   This is the part a Build Space would eventually stand beside or replace,
+   which is why it is isolated rather than mixed into the page sections.
+   ========================================================================== */
+
+/* ==========================================================================
+   Preloader
+   ========================================================================== */
+
+.pre {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none;
+  background: var(--paper);
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 0.9s var(--ease-in-out);
+}
+/* Only ever shown by the pre-paint script, so the page is never blocked. */
+html.intro-pending .pre { display: block; }
+.pre.is-done { clip-path: inset(0 0 100% 0); }
+
+.pre__inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: clamp(1.25rem, 4vh, 2.75rem) var(--gutter) clamp(2rem, 5vh, 3.25rem);
+}
+
+.pre__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ink-faint);
+}
+.pre__mark { color: var(--ink); }
+@media (max-width: 34rem) { .pre__place { display: none; } }
+
+.pre__bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.pre__count {
+  display: flex;
+  align-items: flex-start;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 1rem + 14vw, 11rem);
+  font-weight: 600;
+  line-height: 0.8;
+  letter-spacing: -0.055em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.pre__pct {
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 0.6rem + 0.5vw, 1rem);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+  margin-left: 0.35rem;
+  transform: translateY(0.35em);
+}
+
+/* Status line: the word swaps as loading progresses. */
+.pre__status {
+  position: relative;
+  overflow: hidden;
+  height: 1.5em;
+  padding-bottom: 0.35rem;
+  color: var(--ink-soft);
+  text-align: right;
+}
+.pre__word { display: block; }
+.pre__word.is-entering { animation: word-in 0.5s var(--ease) both; }
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: none; }
+}
+.pre__status.is-ready { color: var(--accent); }
+
+.pre__track {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: var(--rule);
+}
+.pre__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--ink);
+}
+.pre__status.is-ready ~ * .pre__fill,
+.pre.is-ready .pre__fill { background: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pre { transition: opacity 0.2s linear; }
+  .pre.is-done { clip-path: none; opacity: 0; }
+  .pre__word.is-entering { animation: none; }
+}
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  padding-block: calc(var(--bar-h) + 2rem) clamp(5rem, 12vh, 8rem);
+}
+@media (max-width: 56rem) {
+  /* Clear the floating dock. */
+  .hero { padding-bottom: 6rem; }
+}
+
+.hero__inner {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+  align-items: center;
+  width: 100%;
+}
+@media (min-width: 60rem) {
+  .hero__inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); }
+}
+
+/* Name ------------------------------------------------------------------ */
+
+.hero__name {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: 600;
+  line-height: 0.86;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+}
+
+.hero__line { display: block; overflow: hidden; }
+.hero__line-in { display: block; will-change: transform; }
+
+/* Animation is additive: this is the resting state, so no-JS is correct. */
+html.intro-pending .hero .hero__line-in { transform: translateY(105%); }
+.hero.is-revealing .hero__line-in {
+  transform: translateY(0);
+  transition: transform 0.95s var(--ease);
+}
+.hero.is-revealing .hero__line:nth-child(2) .hero__line-in {
+  transition-delay: 0.09s;
+}
+
+.hero__rule { margin-bottom: clamp(1.25rem, 3vw, 2rem); }
+html.intro-pending .hero .hero__rule { transform: scaleX(0); }
+.hero.is-revealing .hero__rule {
+  transform: scaleX(1);
+  transition: transform 1s var(--ease) 0.35s;
+}
+
+.hero__role {
+  font-size: var(--t-h3);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.9rem;
+}
+
+.hero__blurb {
+  max-width: 34ch;
+  color: var(--ink-soft);
+  font-size: var(--t-body);
+  line-height: 1.65;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.hero__status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+}
+
+.hero__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2f9e5f;
+  box-shadow: 0 0 0 0 rgba(47, 158, 95, 0.55);
+  animation: pulse 2.4s var(--ease-in-out) infinite;
+  flex: none;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(47, 158, 95, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(47, 158, 95, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(47, 158, 95, 0); }
+}
+
+/* Fade the supporting copy up after the name lands. */
+html.intro-pending .hero .hero__role,
+html.intro-pending .hero .hero__blurb,
+html.intro-pending .hero .hero__actions,
+html.intro-pending .hero .hero__status,
+html.intro-pending .hero .hero__scroll {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+.hero.is-revealing .hero__role,
+.hero.is-revealing .hero__blurb,
+.hero.is-revealing .hero__actions,
+.hero.is-revealing .hero__status,
+.hero.is-revealing .hero__scroll {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.7s var(--ease), transform 0.8s var(--ease);
+}
+.hero.is-revealing .hero__role    { transition-delay: 0.30s; }
+.hero.is-revealing .hero__blurb   { transition-delay: 0.38s; }
+.hero.is-revealing .hero__actions { transition-delay: 0.46s; }
+.hero.is-revealing .hero__status  { transition-delay: 0.54s; }
+.hero.is-revealing .hero__scroll  { transition-delay: 0.70s; }
+
+.hero__scroll {
+  position: absolute;
+  left: var(--gutter);
+  bottom: clamp(1.25rem, 4vh, 2.5rem);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+.hero__scroll svg { animation: nudge 2.6s var(--ease-in-out) infinite; }
+@keyframes nudge {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50%      { transform: translateY(4px); opacity: 1; }
+}
+@media (max-width: 60rem) { .hero__scroll { display: none; } }
+
+/* ==========================================================================
+   Code card: the one dark object on the page
+   ========================================================================== */
+
+.hero__code { position: relative; }
+
+.code {
+  position: relative;
+  background: var(--code-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 1px rgba(20, 18, 12, 0.05),
+              0 8px 20px -8px rgba(20, 18, 12, 0.18),
+              0 30px 60px -30px rgba(20, 18, 12, 0.35);
+}
+
+html.intro-pending .hero .code { opacity: 0; transform: translateY(1.5rem) scale(0.985); }
+.hero.is-revealing .code {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s var(--ease) 0.1s, transform 0.9s var(--ease) 0.1s;
+}
+
+.code__chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0.95rem;
+  background: var(--code-chrome);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.code__dots { display: flex; gap: 0.4rem; }
+.code__dots i {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #3b3944;
+}
+.code__dots i:first-child  { background: #e0655b; }
+.code__dots i:nth-child(2) { background: #e0b04a; }
+.code__dots i:last-child   { background: #5aa963; }
+.code__file { color: var(--code-dim); letter-spacing: 0.04em; text-transform: none; }
+
+.code__body {
+  margin: 0;
+  padding: clamp(1rem, 3vw, 1.6rem) clamp(0.9rem, 3vw, 1.6rem);
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 0.6rem + 0.45vw, 0.875rem);
+  line-height: 1.85;
+  color: var(--code-ink);
+  /* Fixed floor so the card doesn't jolt the layout as lines are typed. */
+  min-height: 16.5em;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: hidden;
+  tab-size: 2;
+}
+
+.code__out { font: inherit; }
+.tok-key  { color: var(--code-key); }
+.tok-str  { color: var(--code-str); }
+.tok-prop { color: var(--code-prop); }
+.tok-punc { color: var(--code-punc); }
+
+.code__caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 0.06em;
+  vertical-align: text-bottom;
+  background: var(--code-ink);
+  opacity: 0;
+}
+.code.is-typing .code__caret { opacity: 1; animation: blink 1.05s steps(1) infinite; }
+.code.is-done .code__caret { opacity: 0.35; animation: blink 1.2s steps(1) infinite; }
+@keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+/* Autocomplete flourish */
+.code__ac {
+  position: absolute;
+  left: clamp(2.5rem, 9vw, 5.5rem);
+  top: 58%;
+  min-width: 13rem;
+  padding: 0.3rem;
+  background: #26252c;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 7px;
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.code__ac.is-on { opacity: 1; transform: none; }
+
+.code__ac-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.28rem 0.5rem;
+  border-radius: 4px;
+  color: var(--code-dim);
+  white-space: nowrap;
+}
+.code__ac-row.is-on { background: #35333d; color: var(--code-ink); }
+.code__ac-kind {
+  font-size: 0.6rem;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: var(--code-prop);
+  opacity: 0.8;
+}
+
+@media (max-width: 40rem) {
+  .code__ac { display: none; }
+  .code__body { min-height: 17em; }
+}
+

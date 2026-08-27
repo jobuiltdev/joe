@@ -1,0 +1,224 @@
+{% load static %}
+{% comment %}
+The Build Space: a map of what has been built, serving both lenses.
+
+Three things carry the composition, in this order of weight:
+
+  1. the name, which is the anchor and is not a node
+  2. the project nodes, primary work nearest the name
+  3. the connections between them, which are background in Experience Mode
+     and become the structure in Engineering Mode
+
+Every node is a real anchor to a real route. Not a div with a click handler:
+the map has to be operable with a keyboard and readable by a screen reader
+whether or not any of the motion runs.
+
+Facts come from PROJECTS. Coordinates come from layout.py. The two are joined
+in the view and never mixed in the data.
+
+Mobile does not shrink this. Below 60rem the same nodes render as an ordered
+vertical map, because a constellation squeezed onto a phone is overlapping
+tap targets pretending to be a design.
+{% endcomment %}
+
+<section class="build" id="top" data-build aria-labelledby="build-name">
+
+  {% comment %}
+  The field. Purely decorative and the first thing reduced motion drops, but
+  not empty: without a ground the nodes read as captions arranged around a
+  heading rather than as points plotted in a space.
+
+  Two layers, quietest first: a measured grid, then the connections. The grid
+  is CSS rather than an SVG pattern because the wires' viewBox is deliberately
+  non-uniform and a stretched pattern would print rectangles for squares.
+
+  The connections stop short of the centre rather than meeting at a point, so
+  the identity reads as what they run to. That clearance is computed in the
+  view from layout.CORE_CLEARANCE; nothing here needs to know about it.
+  {% endcomment %}
+  <div class="build__field" aria-hidden="true" data-build-field>
+    <div class="build__grid"></div>
+
+    <svg class="build__wires" viewBox="0 0 100 100" preserveAspectRatio="none"
+         focusable="false">
+      {% for link in build_links %}
+        <line class="build__wire" data-wire data-tier="{{ link.tier }}"
+              data-source="{{ link.source }}" data-target="{{ link.target }}"
+              x1="{{ link.x1 }}" y1="{{ link.y1 }}"
+              x2="{{ link.x2 }}" y2="{{ link.y2 }}"
+              vector-effect="non-scaling-stroke"/>
+      {% endfor %}
+    </svg>
+
+  </div>
+
+  <div class="build__identity">
+    <h1 class="build__name" id="build-name">
+      <span>{{ profile.first }}</span>
+      <span>{{ profile.last }}</span>
+    </h1>
+    <p class="build__role">{{ profile.role }}</p>
+    <p class="build__lede">
+      A map of the products and systems I have built. Switch to Engineering to
+      see how they are put together.
+    </p>
+  </div>
+
+  <ul class="build__nodes" data-build-nodes
+      aria-label="Projects. {{ build_nodes|length }} in total.">
+    {% for node in build_nodes %}
+      <li class="build__node build__node--{{ node.tier }}"
+          style="--nx: {{ node.x }}; --ny: {{ node.y }}; --i: {{ node.index }}"
+          data-node="{{ node.slug }}" data-tier="{{ node.tier }}">
+
+        {% comment %}
+        href carries the server's best guess, which is correct whenever the
+        mode came from the URL and is what a JavaScript-off visitor follows.
+        data-path is the same route without it, so build.js can restamp the
+        link through JE.mode when the lens actually came from storage.
+        {% endcomment %}
+        <a class="build__hit" href="{{ node.url }}{{ mode_query }}"
+           data-path="{{ node.url }}"
+           data-node-link aria-describedby="node-detail-{{ node.slug }}">
+          <span class="build__dot" aria-hidden="true"></span>
+
+          {% comment %}
+          Experience Mode's product cue, on the lead work only. Eight
+          thumbnails would be a contact sheet; three is the hierarchy stated
+          in the strongest terms available. It is the video's own poster
+          frame, so nothing new is fetched and nothing is fabricated.
+          {% endcomment %}
+          {% if node.tier == "primary" %}
+            <span class="build__thumb" data-lens="experience" aria-hidden="true">
+              {% if node.video %}
+                <img src="{% static node.video|add:'.jpg' %}" alt=""
+                     loading="lazy" decoding="async">
+              {% elif node.image %}
+                <img src="{% static node.image|add:'.jpg' %}" alt=""
+                     loading="lazy" decoding="async">
+              {% endif %}
+            </span>
+          {% endif %}
+
+          <span class="build__label">
+            <span class="build__project">{{ node.name }}</span>
+
+            {# Experience: what the product is. #}
+            <span class="build__kind" data-lens="experience">{{ node.kind }}</span>
+
+            {% comment %}
+            Engineering: what it is made of, at rest rather than on hover.
+            aria-hidden because the panel below already carries the same
+            record in full and a screen reader should hear it once.
+            {% endcomment %}
+            <span class="build__stack mono" data-lens="engineering" aria-hidden="true">
+              {% if node.stack %}
+                {% for item in node.stack|slice:":3" %}<i>{{ item }}</i>{% endfor %}
+              {% else %}
+                <i class="build__unknown">no engineering record</i>
+              {% endif %}
+            </span>
+
+            {% comment %}
+            The project's own verified architecture, drawn as satellites around
+            it. Absent where none was verified, which is how MarketBrainers
+            stays a project with no invented internals.
+            {% endcomment %}
+            {% if node.satellites %}
+              <span class="build__orbit mono" data-lens="engineering" aria-hidden="true">
+                {% for s in node.satellites %}<i data-kind="{{ s.kind }}">{{ s.label }}</i>{% endfor %}
+              </span>
+            {% endif %}
+          </span>
+        </a>
+
+        {% comment %}
+        The detail panel. Shown on hover, focus or tap, and always present in
+        the markup so its contents are reachable without a pointer. Media is
+        the project's own; nothing is fabricated for a project that has none.
+        {% endcomment %}
+        <div class="build__detail" id="node-detail-{{ node.slug }}" data-detail>
+          <div class="build__media">
+            {% if node.video %}
+              <div class="build__phone">
+                <video class="build__video" data-build-video
+                       poster="{% static node.video|add:'.jpg' %}"
+                       muted loop playsinline preload="none"
+                       aria-label="{{ node.media_alt }}">
+                  <source src="{% static node.video|add:'.mp4' %}" type="video/mp4">
+                </video>
+              </div>
+            {% elif node.image %}
+              {# A restrained window, not a fake browser chrome mock. #}
+              <div class="build__window">
+                <span class="build__window-bar" aria-hidden="true"></span>
+                <picture>
+                  <source srcset="{% static node.image|add:'.webp' %}" type="image/webp">
+                  <img src="{% static node.image|add:'.jpg' %}" loading="lazy"
+                       decoding="async" alt="{{ node.media_alt }}">
+                </picture>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="build__facts">
+            <p class="build__meta mono">
+              <span>{{ node.year }}</span>
+              <span class="build__status{% if node.status != 'live' %} build__status--wip{% endif %}">{{ node.status }}</span>
+            </p>
+
+            {# Experience: the product-facing chips. #}
+            <ul class="build__chips mono" data-lens="experience">
+              {% for t in node.tech %}<li>{{ t }}</li>{% endfor %}
+            </ul>
+
+            {% comment %}
+            Engineering: the verified stack read as a stack.
+
+            Deliberately not the Experience layout with different words in it.
+            A product is a paragraph and a row of chips; a system is layers,
+            and each row here is one layer of the real record with the parts
+            that sit in it. Where no record was verified the panel says so and
+            stops — nothing is filled in to make the shape match.
+            {% endcomment %}
+            <div class="build__spec" data-lens="engineering">
+              {% for group in node.stack_groups %}
+                <dl class="build__layer mono">
+                  <dt>{{ group.layer }}</dt>
+                  <dd>{% for item in group.items %}<i>{{ item }}</i>{% endfor %}</dd>
+                </dl>
+              {% endfor %}
+
+              {% if node.satellites %}
+                <ul class="build__satellites mono">
+                  {% for s in node.satellites %}
+                    <li data-kind="{{ s.kind }}">{{ s.label }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+
+              {% if not node.has_engineering %}
+                <p class="build__none mono">No engineering record published</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% comment %}
+  The cue names its destination instead of describing the page. "More below"
+  told a reader something they could already see; this tells them what is
+  down there and how much of it, and goes straight to the section rather than
+  to whatever happens to be next.
+  {% endcomment %}
+  <a class="build__cue mono" href="#work" data-nav-link="work">
+    <span class="build__cue-rule" aria-hidden="true"></span>
+    <span class="build__cue-label">
+      Selected work
+      <b class="build__cue-count">{{ build_nodes|length }}</b>
+    </span>
+  </a>
+
+</section>

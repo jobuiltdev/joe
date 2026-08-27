@@ -1,8 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-  {% include "pages/partials/hero.html" %}
+  {% comment %}
+  The landing is chosen by settings.LANDING, so a replacement can be switched
+  on without forking this template.
+  {% endcomment %}
+  {% include landing_template %}
   {% include "pages/partials/about.html" %}
-  {% include "pages/partials/work.html" %}
+  {% comment %}
+  The work section belongs to the landing. The legacy hero introduces the
+  pinned deck; the Build Space is followed by a readable index of the same
+  projects. Neither template knows about the other.
+  {% endcomment %}
+  {% include work_template %}
   {% include "pages/partials/contact.html" %}
 {% endblock %}

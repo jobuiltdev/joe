@@ -1,0 +1,62 @@
+{% load static %}{% comment %}
+The one place project media is rendered. Both the deck panel and the case
+study include this, so the branch cannot drift between them.
+
+Takes:
+  project  a PROJECTS entry
+  deck     True inside the horizontal deck, False on a standalone page
+  lazy     True where the media is one of many below the fold
+
+Media is optional and the three cases are mutually exclusive. This has to stay
+a branch rather than a hidden element: under manifest static storage the static
+tag raises for a file that isn't in the manifest, so emitting one for absent
+media would 500 the whole page rather than leave a gap.
+
+The two surfaces differ in exactly two ways. In the deck the clip is driven by
+deck.js and gets a tap-to-play button, because phones refuse autoplay. On its
+own page there is no deck, so the clip carries native controls instead and
+works with no JavaScript at all.
+{% endcomment %}
+{% if project.video %}
+  <figure class="panel__phone">
+    <div class="panel__phone-body">
+      <video class="panel__video"{% if deck %} data-deck-video{% endif %}
+             poster="{% static project.video|add:'.jpg' %}"
+             muted loop playsinline preload="metadata"{% if not deck %} controls{% endif %}
+             aria-label="{{ project.media_alt }}">
+        <source src="{% static project.video|add:'.mp4' %}" type="video/mp4">
+      </video>
+      {% if deck %}
+        <button class="panel__play" type="button" data-deck-play
+                aria-label="Play the {{ project.name }} demo">
+          <span>
+            <svg viewBox="0 0 24 24" width="20" height="20"
+                 fill="currentColor" aria-hidden="true">
+              <path d="M8 5.5v13l11-6.5z"/>
+            </svg>
+          </span>
+        </button>
+      {% endif %}
+    </div>
+    <figcaption class="panel__phone-cap mono">Screen recording</figcaption>
+  </figure>
+{% elif project.image %}
+  <figure class="panel__shot"{% if deck %} data-deck-parallax{% endif %}>
+    <picture>
+      <source srcset="{% static project.image|add:'.webp' %}" type="image/webp">
+      {% comment %}
+      Lazy inside the deck, where seven of eight panels are off screen, and in
+      the work index for the same reason. On the case study this is the page's
+      main image, so loading it lazily would only delay the largest paint.
+      {% endcomment %}
+      <img src="{% static project.image|add:'.jpg' %}"
+           loading="{% if deck or lazy %}lazy{% else %}eager{% endif %}" decoding="async"
+           alt="{{ project.media_alt }}">
+    </picture>
+  </figure>
+{% else %}
+  <div class="panel__plate" aria-hidden="true">
+    <span class="panel__plate-name">{{ project.name }}</span>
+    <span class="panel__plate-kind mono">{{ project.kind }}</span>
+  </div>
+{% endif %}

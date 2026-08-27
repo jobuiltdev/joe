@@ -1,0 +1,160 @@
+/* ==========================================================================
+   Case study: one project on its own page
+   Builds on the .panel__* primitives from work.css, so it loads after it.
+   ========================================================================== */
+
+/* ==========================================================================
+   Case study: one project on its own page
+   Layout only. Every colour, size and rule here is an existing token, and the
+   type, chips, meta row and feature lists are the components the deck already
+   uses. This page gets redesigned alongside the Build Space, so it stays plain
+   on purpose.
+   ========================================================================== */
+
+.case {
+  padding-top: calc(var(--bar-h) + clamp(1.5rem, 4vw, 3rem));
+  padding-bottom: var(--section);
+}
+
+.case__back { margin-bottom: clamp(1.5rem, 4vw, 2.5rem); }
+.case__back .ln { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; }
+.case__back-arrow { flex: none; }
+
+.case__head { padding-bottom: clamp(1.5rem, 4vw, 2.5rem); }
+
+.case__name {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.case__kind {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--t-lead);
+  color: var(--ink-soft);
+  margin-top: 0.4rem;
+}
+
+.case__meta { margin-top: clamp(1rem, 3vw, 1.75rem); }
+
+.case__lens { padding-block: clamp(1.75rem, 5vw, 3rem); }
+.case__lens--engineering { border-top: 1px solid var(--rule); }
+
+.case__title {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-bottom: clamp(1rem, 3vw, 1.75rem);
+}
+
+.case__lead {
+  font-size: var(--t-lead);
+  line-height: 1.5;
+  color: var(--ink);
+  max-width: 46ch;
+}
+
+.case__note { color: var(--ink-soft); max-width: 60ch; }
+
+.case__features { margin-top: clamp(1rem, 3vw, 1.5rem); max-width: 60ch; }
+
+.case__intro { display: grid; gap: clamp(1.75rem, 5vw, 3rem); align-items: start; }
+
+/* The media column only earns its own track once there is room for both. */
+@media (min-width: 58rem) {
+  .case__intro { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+}
+
+.case__media { min-width: 0; }
+
+/* The receiving half of the Build Space's cross-document view transition. The
+   sending half is named by build.js on the node being opened. Purely
+   decorative: without support, or with reduced motion, the navigation is an
+   ordinary one and nothing here applies. */
+@media (prefers-reduced-motion: no-preference) {
+  .case__media > * { view-transition-name: project-media; }
+}
+.case__media .panel__video { height: clamp(18rem, 55vh, 30rem); }
+
+.case__block { padding-block: clamp(1.1rem, 3vw, 1.75rem); }
+.case__block + .case__block { border-top: 1px solid var(--rule); }
+
+.case__label,
+.case__sublabel {
+  font-size: var(--t-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.75rem;
+}
+.case__sublabel { margin-top: clamp(1rem, 3vw, 1.5rem); }
+
+/* Architecture, printed. A diagram renders over this later; until then this
+   is what the page says, and what it says with JavaScript off. */
+.nodes {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.nodes__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+}
+.nodes__label { font-weight: 600; }
+.nodes__kind {
+  font-size: var(--t-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.nodes__note { font-size: 0.9375rem; color: var(--ink-soft); }
+.nodes__tech { margin-top: 0.35rem; }
+
+.edges { display: grid; gap: 0.35rem; font-size: var(--t-mono); }
+.edges__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-block: 0.3rem;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--rule-soft, var(--rule));
+}
+.edges__arrow { color: var(--ink-faint); }
+.edges__note { color: var(--ink-faint); }
+
+.routes { display: grid; gap: 0.35rem; font-size: var(--t-mono); margin-top: 0.75rem; }
+.routes__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-block: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+}
+.routes__method { color: var(--accent); font-weight: 500; }
+.routes__path { color: var(--ink); }
+.routes__note { color: var(--ink-faint); }
+
+.calls { display: grid; gap: 0.9rem; }
+.calls__item { border-left: 2px solid var(--rule-strong); padding-left: 1rem; }
+.calls__choice { font-weight: 600; }
+.calls__why { color: var(--ink-soft); font-size: 0.9375rem; margin-top: 0.15rem; }
+
+.case__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1rem, 3vw, 2rem);
+  padding-top: clamp(1.5rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--rule);
+}
+

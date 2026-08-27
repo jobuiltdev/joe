@@ -1,0 +1,330 @@
+/* ==========================================================================
+   Chrome: the top bar and the floating rail
+   Site furniture that persists across every page, home and case study alike.
+   ========================================================================== */
+
+/* ==========================================================================
+   Top bar: wordmark only, navigation lives in the rail
+   ========================================================================== */
+
+.bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: var(--bar-h);
+  pointer-events: none;
+}
+
+.bar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 100%;
+}
+
+.bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Solid, not a backdrop-filter: blurring the backdrop forces a GPU readback
+     of whatever is underneath every frame, and underneath is the pinned deck's
+     full-width composited track. That combination stalls the renderer. */
+  background: var(--paper);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.bar.is-stuck::before { opacity: 1; }
+
+.bar__rule {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: var(--rule);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.6s var(--ease);
+}
+.bar.is-stuck .bar__rule { transform: scaleX(1); }
+
+/* The bar itself stays transparent to the pointer so it never blocks the page
+   underneath it, but everything placed in it must still be clickable.
+   Opting the children in as a group rather than naming them one by one is
+   deliberate: the previous allow-list silently dropped the mode switch and the
+   palette trigger as each was added, and a control that cannot be clicked
+   looks identical to one that works until someone tries it with a mouse. */
+.bar__inner > * { position: relative; z-index: 1; pointer-events: auto; }
+
+.bar__mark {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(0.95rem, 0.85rem + 0.4vw, 1.1rem);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+.bar__mark-full { display: none; }
+@media (min-width: 34rem) {
+  .bar__mark-short { display: none; }
+  .bar__mark-full { display: block; }
+}
+
+.bar__meta { color: var(--ink-faint); }
+@media (max-width: 44rem) { .bar__meta { display: none; } }
+
+/* The switch sits at the end of the bar, after the location on wide screens
+   and on its own once the location drops out. */
+.bar__inner .modes { margin-left: auto; }
+.bar__meta + .modes { margin-left: clamp(0.75rem, 2vw, 1.5rem); }
+
+/* Theme icon swap (used inside the rail) ---------------------------------- */
+
+.bar__sun, .bar__rays, .bar__moon {
+  transition: opacity 0.35s var(--ease), transform 0.5s var(--ease);
+  transform-origin: center;
+}
+.bar__moon { opacity: 0; transform: rotate(-70deg) scale(0.5); }
+
+:root[data-theme="dark"] .bar__sun,
+:root[data-theme="dark"] .bar__rays { opacity: 0; transform: scale(0.4); }
+:root[data-theme="dark"] .bar__moon { opacity: 1; transform: none; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bar__sun,
+  :root:not([data-theme="light"]) .bar__rays { opacity: 0; transform: scale(0.4); }
+  :root:not([data-theme="light"]) .bar__moon { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   Floating rail: a flat cylinder that expands to labels on hover
+   ========================================================================== */
+
+.rail {
+  position: fixed;
+  z-index: 70;
+  top: 50%;
+  right: clamp(0.75rem, 2vw, 1.75rem);
+  transform: translateY(-50%);
+}
+
+.rail__pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  box-shadow: 0 1px 2px rgba(20, 18, 12, 0.04),
+              0 10px 30px -12px rgba(20, 18, 12, 0.22);
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+
+.rail:hover .rail__pill,
+.rail:focus-within .rail__pill {
+  border-color: var(--rule-strong);
+  box-shadow: 0 1px 2px rgba(20, 18, 12, 0.05),
+              0 18px 44px -14px rgba(20, 18, 12, 0.3);
+}
+
+/* Avatar ---------------------------------------------------------------- */
+
+.rail__avatar {
+  position: relative;
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: 50%;
+  overflow: visible;
+}
+.rail__avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease);
+}
+.rail__avatar:hover img { transform: scale(1.06); }
+
+/* Ring that draws itself around the avatar on hover. */
+.rail__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.4s var(--ease), transform 0.5s var(--ease);
+}
+.rail__avatar:hover .rail__ring,
+.rail__avatar:focus-visible .rail__ring { opacity: 1; transform: scale(1); }
+
+.rail__divider {
+  width: 1rem;
+  height: 1px;
+  background: var(--rule);
+  flex: none;
+}
+
+/* Items ----------------------------------------------------------------- */
+
+.rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.rail__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.5rem;
+  padding-inline: 0.7rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
+}
+
+.rail__dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  transition: opacity 0.3s var(--ease), transform 0.4s var(--ease);
+}
+
+/* The number is what shows while collapsed; the label replaces it on expand. */
+.rail__num {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+  pointer-events: none;
+}
+
+.rail__label {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.45s var(--ease), opacity 0.3s var(--ease);
+}
+
+.rail:hover .rail__label,
+.rail:focus-within .rail__label { max-width: 7rem; opacity: 1; }
+
+.rail__item.is-current { color: var(--ink); }
+.rail__item.is-current .rail__dot {
+  opacity: 1;
+  background: var(--accent);
+  transform: scale(1.35);
+}
+
+@media (hover: hover) {
+  .rail__item:hover { color: var(--ink); background: var(--paper-sunk); }
+  .rail__item:hover .rail__dot { opacity: 1; }
+}
+.rail__item:focus-visible { color: var(--ink); background: var(--paper-sunk); }
+
+/* Theme toggle ---------------------------------------------------------- */
+
+.rail__theme {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: 50%;
+  color: var(--ink-faint);
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
+}
+@media (hover: hover) {
+  .rail__theme:hover { color: var(--ink); background: var(--paper-sunk); }
+}
+
+/* Mobile: the rail becomes a dock at the bottom, in thumb reach ---------- */
+
+@media (max-width: 56rem) {
+  .rail {
+    top: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .rail__pill {
+    flex-direction: row;
+    gap: 0.25rem;
+    padding: 0.375rem;
+  }
+
+  .rail__list { flex-direction: row; width: auto; gap: 0.1rem; }
+  .rail__divider { width: 1px; height: 1.25rem; }
+
+  .rail__avatar { width: 2.25rem; height: 2.25rem; }
+  .rail__theme { width: 2.5rem; height: 2.5rem; }
+
+  /* There is no hover on touch, so nothing can expand. Show the labels
+     outright, and fall back to numbers only when they genuinely won't fit. */
+  .rail__item {
+    min-width: 2.75rem;
+    height: 2.75rem;
+    padding-inline: 0.6rem;
+    justify-content: center;
+  }
+  .rail__dot { display: none; }
+  .rail__num { position: static; opacity: 1; }
+  .rail__label {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .rail__item.is-current { background: var(--paper-sunk); color: var(--accent); }
+}
+
+@media (max-width: 56rem) and (min-width: 22rem) {
+  .rail__num {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    opacity: 1;
+  }
+  .rail__label {
+    position: static;
+    width: auto;
+    height: auto;
+    max-width: none;
+    opacity: 1;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+/* Keep the last section clear of the dock. */
+@media (max-width: 56rem) {
+  .foot { padding-bottom: calc(clamp(2.5rem, 6vw, 4rem) + 4rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail__label { transition: none; }
+}
+

@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Command palette
+
+   Its own sheet, loaded last, so the Build Space can restyle it without
+   touching anything else. Everything here is an existing token: the palette
+   is a new surface, not a new visual language.
+
+   Restrained on purpose. This is a fast index, not a showpiece, and it is a
+   thing you look at for two seconds while typing.
+   ========================================================================== */
+
+.palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* A real tap target, not just an icon. */
+  min-height: 2.25rem;
+  padding-inline: 0.7rem;
+  margin-left: clamp(0.5rem, 1.5vw, 1rem);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-faint);
+  background: var(--paper);
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+@media (hover: hover) {
+  .palette-trigger:hover { color: var(--ink); border-color: var(--rule-strong); }
+}
+.palette-trigger__hint { display: none; }
+/* The shortcut is only worth advertising where there is a keyboard. */
+@media (min-width: 48rem) {
+  .palette-trigger__hint { display: inline-flex; gap: 0.2rem; }
+}
+
+.palette__kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  padding: 0.15em 0.35em;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  background: var(--paper-sunk);
+}
+
+/* The dialog -------------------------------------------------------------- */
+
+/* showModal centres the dialog by default; this makes it a full-viewport
+   layer instead, so the panel can sit high on desktop and fill the screen on
+   a phone, and so a click anywhere outside the panel closes it. */
+.palette {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.palette::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+/* Scroll is locked while it is open, with the scrollbar's width given back as
+   padding so the page underneath does not shift sideways. */
+html.palette-open { overflow: hidden; padding-right: var(--palette-gap, 0); }
+
+.palette__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(38rem, 100%);
+  max-height: min(30rem, 100%);
+  margin: 0 auto;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  overflow: hidden;
+}
+
+/* Desktop: a panel held near the top, where a palette is expected. */
+@media (min-width: 40rem) {
+  .palette__panel {
+    margin-top: 10vh;
+    border-radius: 6px;
+    box-shadow: 0 2rem 4rem -1rem rgb(0 0 0 / 0.3);
+  }
+}
+
+/* Phone: a full screen search surface. A small centred modal on a phone is a
+   desktop pattern wearing the wrong clothes, and the keyboard takes half the
+   screen anyway. */
+@media (max-width: 39.999rem) {
+  .palette__panel { height: 100%; max-height: none; }
+}
+
+/* Search row -------------------------------------------------------------- */
+
+.palette__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.palette__icon { flex: none; color: var(--ink-faint); }
+
+.palette__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* 1rem minimum, or iOS zooms the page when the field takes focus. */
+  font-size: 1rem;
+  line-height: 1.4;
+  padding: 0.35rem 0;
+}
+.palette__input::placeholder { color: var(--ink-faint); }
+.palette__input:focus { outline: none; }
+.palette__input:focus-visible { outline: none; }
+
+.palette__close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding-inline: 0.25rem;
+}
+
+/* Results ----------------------------------------------------------------- */
+
+.palette__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.4rem 0;
+}
+
+.palette__group {
+  padding: 0.75rem 1rem 0.35rem;
+  font-size: var(--t-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.palette__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  /* Comfortable under a thumb. */
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+/* Selection is not a hover state: it is driven by aria-selected, so the
+   keyboard and the pointer light up the same row the same way, and touch gets
+   the same treatment without hovering anything. */
+.palette__item.is-active {
+  background: var(--paper-sunk);
+  border-left-color: var(--accent);
+}
+
+.palette__label { color: var(--ink); font-weight: 500; }
+
+.palette__hint {
+  color: var(--ink-faint);
+  font-size: 0.875rem;
+  /* The label is the thing being chosen; the hint gives way when space is tight. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette__ext {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--t-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.palette__empty {
+  padding: 1.5rem 1rem;
+  color: var(--ink-faint);
+}
+
+.palette__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-faint);
+  background: var(--paper);
+}
+.palette__foot span { display: inline-flex; align-items: center; gap: 0.35rem; }
+/* The hints are for pointer and keyboard users; on a phone they are noise. */
+@media (max-width: 39.999rem) { .palette__foot { display: none; } }
+
+/* Motion ------------------------------------------------------------------ */
+
+/* A short rise, and nothing else. Anything longer is felt as latency on a
+   surface whose whole point is being fast. */
+@media (prefers-reduced-motion: no-preference) {
+  .palette[open] .palette__panel {
+    animation: palette-in 160ms var(--ease) both;
+  }
+  .palette[open]::backdrop {
+    animation: palette-fade 160ms var(--ease) both;
+  }
+}
+
+@keyframes palette-in {
+  from { opacity: 0; transform: translateY(-0.5rem); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes palette-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

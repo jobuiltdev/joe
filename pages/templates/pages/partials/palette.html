@@ -1,0 +1,59 @@
+{% comment %}
+The command palette.
+
+A native <dialog> opened with showModal(), which is doing real work here rather
+than being a stylistic choice: it traps focus, makes the rest of the page
+inert, and closes on Escape without any of that being reimplemented in
+JavaScript. What is left for palette.js is search, arrow navigation and
+activation.
+
+Inside it, the input and list are a combobox over a listbox. The input keeps
+focus the whole time and aria-activedescendant points at the highlighted
+option, which is how a screen reader is told what is selected without focus
+ever leaving the field.
+
+The commands themselves come from pages/views.py, derived from the content
+module, so adding a project adds a command.
+{% endcomment %}
+<dialog class="palette" id="palette" aria-label="Command palette">
+  <div class="palette__panel">
+
+    <div class="palette__bar">
+      <svg class="palette__icon" viewBox="0 0 16 16" width="15" height="15" fill="none"
+           stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>
+      </svg>
+
+      <input class="palette__input" id="palette-input" type="text"
+             role="combobox" aria-expanded="true" aria-controls="palette-list"
+             aria-autocomplete="list" aria-activedescendant=""
+             aria-describedby="palette-help"
+             placeholder="Search projects, sections and links"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+
+      <button class="palette__close" type="button" data-palette-close
+              aria-label="Close command palette">
+        <span class="palette__kbd" aria-hidden="true">Esc</span>
+      </button>
+    </div>
+
+    <p class="palette__help visually-hidden" id="palette-help">
+      Type to filter. Use the up and down arrows to move between results and
+      Enter to open the highlighted one.
+    </p>
+
+    <ul class="palette__list" id="palette-list" role="listbox"
+        aria-label="Commands"></ul>
+
+    <p class="palette__empty" id="palette-empty" hidden>Nothing matches that.</p>
+
+    <footer class="palette__foot mono" aria-hidden="true">
+      <span><b class="palette__kbd">&uarr;</b><b class="palette__kbd">&darr;</b> move</span>
+      <span><b class="palette__kbd">&crarr;</b> open</span>
+      <span><b class="palette__kbd">Esc</b> close</span>
+    </footer>
+
+  </div>
+</dialog>
+
+{{ palette_commands|json_script:"palette-data" }}

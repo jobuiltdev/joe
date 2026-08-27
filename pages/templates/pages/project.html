@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% comment %}
+One project, two lenses over it, one page.
+
+What is lens-independent stays outside both lenses and is rendered once:
+identity, the meta row, the media, the product stack chips and the links. Only
+the writing changes between lenses, plus the engineering detail that has no
+experience counterpart.
+
+Both lenses are in the HTML and CSS hides the inactive one, keyed off the
+data-mode attribute the pre-paint script settles. Nothing here needs to know
+which mode is active.
+
+The engineering lens is absent entirely when a project has no engineering data.
+MarketBrainers is the case that proves it.
+{% endcomment %}
+
+{% block content %}
+<article class="case" id="case" data-project="{{ project.slug }}">
+  <div class="shell">
+
+    <nav class="case__back" aria-label="Breadcrumb">
+      <a class="ln mono" href="{% url 'home' %}{{ mode_query }}#work">
+        <svg class="case__back-arrow" viewBox="0 0 14 14" width="12" height="12" fill="none"
+             stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M12 7H2M6 3L2 7l4 4"/>
+        </svg>
+        All work
+      </a>
+    </nav>
+
+    <header class="case__head">
+      <h1 class="case__name">{{ project.name }}</h1>
+      <p class="case__kind">{{ project.kind }}</p>
+
+      <dl class="panel__meta mono case__meta">
+        <div><dt>Role</dt><dd>{{ project.role }}</dd></div>
+        <div><dt>Year</dt><dd>{{ project.year }}</dd></div>
+        {# Only a shipped project gets the green. #}
+        <div><dt>Status</dt>
+          <dd class="panel__live{% if project.status != 'live' %} panel__live--wip{% endif %}">{{ project.status }}</dd>
+        </div>
+      </dl>
+    </header>
+
+    <div class="case__intro">
+      <div class="case__intro-text">
+
+        <div data-lens="experience">
+          {% if project.experience.summary %}
+            <p class="case__lead">{{ project.experience.summary }}</p>
+          {% endif %}
+
+          {% if project.experience.features %}
+            <ul class="panel__features case__features">
+              {% for f in project.experience.features %}<li>{{ f }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div data-lens="engineering">
+          {% if project.engineering.overview %}
+            <p class="case__lead">{{ project.engineering.overview }}</p>
+          {% elif not project.engineering %}
+            {# Stated, not invented. An absent block is a fact about the record. #}
+            <p class="case__lead case__none">
+              The engineering detail for this project has not been published yet.
+            </p>
+          {% endif %}
+        </div>
+
+        {% comment %}
+        Shared from here down. The chips are the product-facing stack and the
+        links are the same links whichever lens is open, so neither belongs
+        inside one.
+        {% endcomment %}
+        {% if project.tech %}
+          <ul class="panel__tech mono">
+            {% for t in project.tech %}<li>{{ t }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+
+        {% include "pages/partials/project/links.html" with project=project %}
+      </div>
+
+      <div class="case__media">
+        {% include "pages/partials/project/media.html" with project=project deck=False %}
+      </div>
+    </div>
+
+    {% if project.engineering %}
+      <div class="case__lens case__lens--engineering" data-lens="engineering">
+        <h2 class="case__title">How it is built</h2>
+        {% include "pages/partials/project/engineering.html" with engineering=project.engineering %}
+      </div>
+    {% endif %}
+
+    <footer class="case__foot">
+      <a class="ln mono" href="{% url 'home' %}{{ mode_query }}#work">All work</a>
+      <a class="ln mono" href="{% url 'home' %}{{ mode_query }}#contact">Get in touch</a>
+    </footer>
+
+  </div>
+</article>
+{% endblock %}

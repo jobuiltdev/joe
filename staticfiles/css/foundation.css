@@ -1,0 +1,353 @@
+/* ==========================================================================
+   Foundation: tokens, theme, mode, base, shared primitives
+   Everything else depends on this and it depends on nothing. Design tokens,
+   the three-state theme architecture, the lens rules that data-mode drives,
+   base element styles, and the primitives reused everywhere: .shell, .mono,
+   .rule, .ln, .btn, section headers and the mode switch.
+
+   Load this first. A part loaded before it would style against missing tokens.
+   ========================================================================== */
+
+/* ==========================================================================
+   Joseph Edward portfolio
+   Hand-authored. Light editorial: paper ground, large type, hairline rules.
+   ========================================================================== */
+
+/* --- tokens ------------------------------------------------------------- */
+
+:root {
+  /* Light is the base palette. Dark redefines only these, twice, below. */
+  --paper:        #faf9f7;
+  --paper-raised: #ffffff;
+  --paper-sunk:   #f2f0ea;
+  --ink:          #16150f;
+  --ink-soft:     #55524a;
+  --ink-faint:    #8a8578;
+  --rule:         #e2ded3;
+  --rule-strong:  #c9c4b6;
+  --accent:       #b4441f;
+  --accent-soft:  #f0ded5;
+
+  /* The code card is dark in both themes; it's the one dark object. */
+  --code-bg:      #17161a;
+  --code-chrome:  #201f24;
+  --code-ink:     #d8d4cc;
+  --code-dim:     #6d6a75;
+  --code-key:     #c98ee8;
+  --code-str:     #97c98e;
+  --code-prop:    #86b6e6;
+  --code-punc:    #7c7986;
+
+  --font-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-serif:   "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Fluid scale. One set of sizes, no mobile fork to drift out of sync. */
+  --t-mono:    clamp(0.6875rem, 0.64rem + 0.18vw, 0.8125rem);
+  --t-body:    clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --t-lead:    clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+  --t-h3:      clamp(1.375rem, 1.1rem + 1.2vw, 2rem);
+  --t-h2:      clamp(2rem, 1.4rem + 2.8vw, 4rem);
+  /* Sized so the longer of the two name lines still clears the column,
+     since .hero__line clips horizontally as well as vertically. */
+  --t-display: clamp(2.5rem, 0.5rem + 9.4vw, 8.75rem);
+  --t-numeral: clamp(4rem, 2rem + 14vw, 13rem);
+
+  --gutter:  clamp(1.25rem, 0.6rem + 3vw, 4.5rem);
+  --section: clamp(5rem, 3rem + 9vw, 11rem);
+  --bar-h:   clamp(3.75rem, 3.2rem + 1.6vw, 5rem);
+
+  --ease:      cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:        #131210;
+    --paper-raised: #1b1a17;
+    --paper-sunk:   #0d0c0b;
+    --ink:          #f2efe7;
+    --ink-soft:     #a8a396;
+    --ink-faint:    #736f65;
+    --rule:         #2b2925;
+    --rule-strong:  #423f38;
+    --accent:       #e8794c;
+    --accent-soft:  #33221a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:        #131210;
+  --paper-raised: #1b1a17;
+  --paper-sunk:   #0d0c0b;
+  --ink:          #f2efe7;
+  --ink-soft:     #a8a396;
+  --ink-faint:    #736f65;
+  --rule:         #2b2925;
+  --rule-strong:  #423f38;
+  --accent:       #e8794c;
+  --accent-soft:  #33221a;
+  color-scheme: dark;
+}
+
+/* --- base --------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, p, figure, blockquote, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; }
+
+::selection { background: var(--accent); color: var(--paper); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: 0;
+  z-index: 200;
+  padding: 0.75rem 1.25rem;
+  background: var(--ink);
+  color: var(--paper);
+  font: 500 var(--t-mono)/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateY(-140%);
+  transition: transform 0.2s var(--ease);
+}
+.skip-link:focus-visible { transform: translateY(0); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- shared primitives -------------------------------------------------- */
+
+.shell {
+  width: 100%;
+  max-width: 92rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Reserve the strip the vertical rail floats in, so it never sits on top of
+   content. Below this width the rail is a dock at the bottom instead. */
+@media (min-width: 56rem) {
+  .shell { padding-right: calc(var(--gutter) + 4.5rem); }
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.rule {
+  height: 1px;
+  background: var(--rule);
+  border: 0;
+  transform-origin: left center;
+}
+
+/* Lenses ---------------------------------------------------------------- */
+
+/* One global viewing preference, resolved before first paint and expressed on
+   the root element next to data-theme. The two are independent: mode says
+   which lens, theme says which palette, and neither reads the other.
+
+   display:none rather than opacity or visibility, deliberately. The inactive
+   lens has to be genuinely gone: out of the tab order, out of the
+   accessibility tree, and not read aloud. Hiding it visually while leaving it
+   focusable would be worse than not hiding it at all. */
+[data-mode="experience"] [data-lens="engineering"],
+[data-mode="engineering"] [data-lens="experience"] { display: none; }
+
+/* Swapping a lens changes the height of content above the viewport, and the
+   browser's scroll anchoring tries to compensate by moving the scroll offset.
+   It is anchoring to content that is on its way out, so the correction fights
+   the one mode.js makes and the result is a small unexplained jump. Taking the
+   lenses out of anchoring leaves exactly one thing deciding where the page
+   sits after a switch. */
+[data-lens] { overflow-anchor: none; }
+
+/* Absent data is stated plainly rather than filled with a placeholder. */
+.case__none,
+.panel__none { color: var(--ink-faint); }
+
+/* The lens switch ------------------------------------------------------- */
+
+.modes {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--paper);
+}
+
+.modes__opt {
+  display: inline-flex;
+  align-items: center;
+  /* A touch target, not just a word. */
+  min-height: 2.25rem;
+  padding-inline: clamp(0.6rem, 2vw, 1rem);
+  border-radius: 999px;
+  color: var(--ink-faint);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.25s var(--ease), background 0.25s var(--ease);
+}
+
+/* aria-current is the state, so it is also what the styling hangs off. One
+   source of truth means the visible state and the announced state cannot
+   drift apart. */
+.modes__opt[aria-current="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (hover: hover) {
+  .modes__opt:not([aria-current="true"]):hover { color: var(--ink); }
+}
+
+/* The control is never hover-dependent: the selected option is legible
+   without pointing at it, which is the only way it works on touch. */
+
+@media (max-width: 30rem) {
+  .modes__opt { padding-inline: 0.55rem; letter-spacing: 0.06em; }
+}
+
+/* Section headers: 01 / ABOUT ------------------------------------------- */
+
+.section {
+  scroll-margin-top: var(--bar-h);
+  padding-block: var(--section);
+}
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: clamp(2.5rem, 5vw, 5rem);
+}
+
+.section__index { color: var(--ink-faint); }
+
+.section__title {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+}
+
+.section__aside {
+  margin-left: auto;
+  color: var(--ink-faint);
+  text-align: right;
+}
+@media (max-width: 44rem) { .section__aside { display: none; } }
+
+/* Link with a rule that draws under it ---------------------------------- */
+
+.ln {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  text-decoration: none;
+  padding-block: 0.15em;
+}
+.ln::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.4s var(--ease);
+}
+.ln:hover::after,
+.ln:focus-visible::after { transform: scaleX(1); transform-origin: left center; }
+.ln__arrow { transition: transform 0.4s var(--ease); }
+.ln:hover .ln__arrow { transform: translate(0.2em, -0.2em); }
+
+/* Button ---------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 3rem;
+  padding: 0.85em 1.6em;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: transparent;
+  color: var(--ink);
+  transition: background 0.35s var(--ease), color 0.35s var(--ease),
+              border-color 0.35s var(--ease);
+}
+.btn--solid { background: var(--ink); color: var(--paper); }
+
+@media (hover: hover) {
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn--solid:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+}
+

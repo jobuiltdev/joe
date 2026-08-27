@@ -5,6 +5,11 @@ from . import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    # Project case studies. Real URLs, server-rendered, so they survive a
+    # refresh and a cold share with no JavaScript involved.
+    path("work/<slug:slug>/", views.project_detail, name="project_detail"),
+    # There is no work index of its own; the deck on the home page is it.
+    path("work/", RedirectView.as_view(url="/#work", permanent=False), name="work"),
     # The site used to be four pages. Keep the old paths working; they point
     # at the matching section of the one-pager.
     path("about/", RedirectView.as_view(url="/#about", permanent=True), name="about"),

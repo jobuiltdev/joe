@@ -5,6 +5,12 @@
 (function () {
   'use strict';
 
+  var motion = (window.JE || {}).motion;
+  if (!motion) {
+    if (window.console) console.error('nav.js needs motion.js, which did not load');
+    return;
+  }
+
   var bar = document.getElementById('bar');
   var links = Array.prototype.slice.call(document.querySelectorAll('[data-nav-link]'));
   if (!links.length) return;
@@ -35,31 +41,30 @@
 
   links.forEach(function (link) {
     link.addEventListener('click', function (e) {
+      var id = link.dataset.navLink;
+
+      // Only take over the click when the section is actually on this page.
+      // On a project page the rail still points at the home page's sections,
+      // and the browser has to be allowed to navigate there. Calling
+      // preventDefault unconditionally made those links do nothing at all.
+      if (!document.getElementById(id)) return;
+
       e.preventDefault();
-      scrollToSection(link.dataset.navLink);
+      scrollToSection(id);
     });
   });
 
   /* --- bar backing ------------------------------------------------------ */
 
-  var ticking = false;
-
   function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(function () {
-      try {
-        if (bar) {
-          bar.classList.toggle('is-stuck', window.pageYOffset > window.innerHeight * 0.55);
-        }
-      } finally {
-        // Always clear the guard. A throw here would freeze every later frame.
-        ticking = false;
-      }
-    });
+    if (bar) {
+      bar.classList.toggle('is-stuck', window.pageYOffset > window.innerHeight * 0.55);
+    }
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
+  // The ticking guard and the scroll listener now live in motion.js, shared
+  // with the deck rather than duplicated here.
+  motion.onScroll(onScroll);
   onScroll();
 
   /* --- scroll-spy ------------------------------------------------------- */

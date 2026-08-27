@@ -1,0 +1,596 @@
+/* ==========================================================================
+   Work: the pinned horizontal deck and the project panel
+   Also owns the .panel__* primitives, which the case study reuses. That is a
+   real coupling rather than an accident of ordering: case.css is loaded after
+   this file and builds on those classes. Worth untangling when the deck is
+   redesigned; moving them now would be a visual change for no gain.
+   ========================================================================== */
+
+/* ==========================================================================
+   Work: pinned horizontal deck
+   ========================================================================== */
+
+.work {
+  position: relative;
+  scroll-margin-top: 0;
+  background: var(--paper-sunk);
+  border-block: 1px solid var(--rule);
+}
+
+/* Height is set by JS to (panels + 1) x viewport once pinning is on. The
+   default is the unpinned, vertically stacked layout. */
+.work__pin { position: relative; }
+
+.work__head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding-block: clamp(1.5rem, 4vw, 2.5rem) 1rem;
+}
+
+.work__meter {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.work__counter { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.work__counter b { color: var(--ink); font-weight: 500; }
+
+.work__segs { display: flex; gap: 0.4rem; }
+.work__seg {
+  width: clamp(1.5rem, 4vw, 2.75rem);
+  height: 2px;
+  padding: 0;
+  background: var(--rule-strong);
+  transition: background 0.4s var(--ease);
+}
+.work__seg.is-on { background: var(--ink); }
+
+/* Panels ---------------------------------------------------------------- */
+
+.panel { display: flex; align-items: center; }
+
+.panel__inner {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 4rem);
+  align-items: center;
+  width: 100%;
+}
+
+.panel__num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, min(1.5rem + 3.2vw, 7vh), 4.5rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--rule-strong);
+  margin-bottom: 0.25em;
+}
+
+/* The panel heading is the link into the case study. Inline, so it adds no
+   box to a panel that is already tight in pinned mode, and it keeps the video
+   and its play button clear of the link. */
+.panel__name-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline;
+}
+.panel__name-link .ln__arrow {
+  /* The base rule sets svg { display: block }, which would drop the arrow
+     onto its own line under the heading. It belongs on the baseline beside
+     the last word. */
+  display: inline-block;
+  margin-left: 0.25em;
+  vertical-align: baseline;
+  color: var(--ink-faint);
+  transition: transform 220ms var(--ease), color 220ms var(--ease);
+}
+@media (hover: hover) {
+  .panel__name-link:hover .ln__arrow { color: var(--accent); transform: translate(2px, -2px); }
+}
+.panel__name-link:focus-visible .ln__arrow { color: var(--accent); }
+
+.panel__name {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, min(1.2rem + 3.2vw, 8vh), 4rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+
+.panel__kind {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1rem, min(0.95rem + 0.85vw, 3.2vh), 1.625rem);
+  color: var(--ink-soft);
+  margin-top: 0.3rem;
+}
+
+.panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem clamp(1.25rem, 3vw, 2.5rem);
+  margin-top: clamp(0.85rem, min(3vw, 2.2vh), 1.6rem);
+  padding-block: clamp(0.6rem, min(2vw, 1.6vh), 1.1rem);
+  border-block: 1px solid var(--rule);
+}
+.panel__meta div { display: flex; gap: 0.55rem; align-items: baseline; }
+.panel__meta dt { color: var(--ink-faint); }
+.panel__meta dd { margin: 0; color: var(--ink); }
+.panel__live { color: #2f9e5f; }
+.panel__live--wip { color: var(--ink-soft); }
+
+.panel__summary {
+  margin-top: clamp(0.75rem, min(2.5vw, 2vh), 1.4rem);
+  color: var(--ink-soft);
+  max-width: 52ch;
+  line-height: 1.6;
+}
+
+.panel__features {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: clamp(0.75rem, min(2.5vw, 2vh), 1.4rem);
+  max-width: 52ch;
+}
+.panel__features li {
+  position: relative;
+  padding-left: 1.1rem;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+.panel__features li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 0.45rem;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.panel__tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: clamp(0.85rem, min(3vw, 2.2vh), 1.6rem);
+}
+.panel__tech li {
+  padding: 0.4em 0.75em;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+
+.panel__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1rem, 3vw, 2rem);
+  margin-top: clamp(1rem, min(3.5vw, 2.6vh), 2rem);
+}
+.panel__link {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  min-height: 2.75rem;
+}
+
+/* Source links get their own row so a project with two builds doesn't wrap
+   its four links into a ragged block. */
+.panel__links--repos { margin-top: 0.75rem; gap: clamp(0.85rem, 2.5vw, 1.5rem); }
+
+/* Source sits a step quieter than the live links: the demo is the headline,
+   the repo is for whoever wants to read it. */
+.panel__link--repo { color: var(--ink-faint); }
+@media (hover: hover) {
+  .panel__link--repo:hover { color: var(--ink); }
+}
+.panel__link--repo:focus-visible { color: var(--ink); }
+
+.panel__side {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.85rem, min(2.5vw, 2vh), 1.5rem);
+  min-width: 0;
+}
+
+.panel__shot { margin: 0; overflow: hidden; }
+.panel__shot img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+/* Phone demos ----------------------------------------------------------- */
+
+/* The two mobile apps are portrait screen recordings, so they get a device
+   frame instead of the landscape plate the web projects use. Sized from its
+   height, not its width: in a wide panel the height is what's scarce, and a
+   9:20 clip fitted to the column width would tower off the screen. */
+.panel__phone {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.panel__phone-body {
+  position: relative;
+  padding: 0.4rem;
+  border-radius: 1.9rem;
+  /* Dark, like the hero's IDE card. Deliberately the same move: a screen is
+     the one object on this paper that should read as lit rather than printed. */
+  background: #17161a;
+  box-shadow:
+    0 0 0 1px var(--rule-strong),
+    0 1.5rem 2.5rem -1.25rem rgb(0 0 0 / 0.35);
+}
+
+.panel__video {
+  display: block;
+  height: clamp(15rem, 42vh, 25rem);
+  width: auto;
+  aspect-ratio: 288 / 640;
+  border-radius: 1.55rem;
+  background: #000;
+  object-fit: cover;
+}
+
+/* Autoplay is a request, not a guarantee, and phones refuse it often enough
+   that it cannot be the only way in. The frame always carries a play control
+   and hides it only while the clip is actually running, so a refused autoplay
+   degrades to a tap rather than to a still image that does nothing. */
+.panel__play {
+  position: absolute;
+  inset: 0.4rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 1.55rem;
+  background: rgb(0 0 0 / 0.3);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+.panel__play span {
+  display: grid;
+  place-items: center;
+  /* Comfortably past the 44px minimum tap target. */
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  color: #17161a;
+  /* The glyph is a triangle, which reads as off-centre when truly centred. */
+  padding-left: 0.15rem;
+}
+.panel__play:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: -4px;
+}
+.panel__phone.is-playing .panel__play {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.panel__phone-cap {
+  font-size: var(--t-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Awaiting media -------------------------------------------------------- */
+
+/* A project can ship before its screenshot does. This holds the column's
+   weight so the panel doesn't look half-built, and reads as typography
+   rather than as a broken image. */
+.panel__plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  aspect-ratio: 16 / 10;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--rule);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 10px,
+      var(--rule) 10px 11px
+    );
+}
+.panel__plate-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, min(2.2vw, 3.4vh), 2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink-soft);
+}
+.panel__plate-kind {
+  font-size: var(--t-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Pinned mode ----------------------------------------------------------- */
+
+.work.is-pinned .work__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  /* The head sits inside the pinned area, so it has to clear the fixed bar. */
+  padding-top: var(--bar-h);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.work.is-pinned .work__track {
+  flex: 1 1 auto;
+  /* Without min-height:0 a flex child refuses to shrink below its content,
+     which makes the pinned column fight its own layout every frame. */
+  min-height: 0;
+  display: flex;
+}
+.work.is-pinned .panel {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.work.is-pinned .panel__inner {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  max-height: 100%;
+}
+.work.is-pinned .panel__shot img { max-height: 38vh; object-fit: cover; }
+
+/* Pinned panels get exactly one viewport, so the media is capped against the
+   viewport height rather than allowed to set the panel's height. */
+.work.is-pinned .panel__video { height: min(44vh, 23rem); }
+.work.is-pinned .panel__plate { max-height: 38vh; }
+
+.work.is-pinned .work__head { padding-block: clamp(0.85rem, 2.2vh, 1.5rem) 0.75rem; }
+.work.is-pinned .work__head .section__title {
+  font-size: clamp(1.375rem, min(2.4vw, 4.2vh), 2.25rem);
+}
+.work.is-pinned .panel__tech,
+.work.is-pinned .panel__links { margin-top: 0; }
+
+/* Everything below has to clear one viewport minus the bar and the head, so
+   the feature list runs two-up and the vertical rhythm tightens. */
+.work.is-pinned .panel__features { grid-template-columns: 1fr 1fr; column-gap: 1.25rem; }
+.work.is-pinned .panel__summary { max-width: 46ch; }
+.work.is-pinned .panel__meta { gap: 0.4rem clamp(1rem, 2.4vw, 2rem); }
+
+@media (max-height: 780px) {
+  .work.is-pinned .panel__features li { font-size: 0.875rem; }
+  .work.is-pinned .panel__tech li { padding: 0.3em 0.65em; }
+  /* The caption is the first thing that can go without losing meaning, and
+     dropping it buys the frame back the height it costs. */
+  .work.is-pinned .panel__phone-cap { display: none; }
+}
+
+/* Unpinned (mobile, reduced motion, no JS): plain vertical stack --------- */
+
+.work:not(.is-pinned) .work__meter { display: none; }
+.work:not(.is-pinned) .work__track {
+  display: grid;
+  gap: clamp(3rem, 8vw, 5rem);
+  padding-bottom: clamp(3rem, 8vw, 5rem);
+}
+.work:not(.is-pinned) .panel { scroll-margin-top: var(--bar-h); }
+.work:not(.is-pinned) .panel__shot,
+.work:not(.is-pinned) .panel__phone,
+.work:not(.is-pinned) .panel__plate { margin-top: 1.5rem; }
+
+@media (min-width: 48rem) {
+  .work:not(.is-pinned) .panel__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .work:not(.is-pinned) .panel__shot,
+  .work:not(.is-pinned) .panel__phone,
+  .work:not(.is-pinned) .panel__plate { margin-top: 0; }
+}
+
+
+/* ==========================================================================
+   Work index
+
+   The readable counterpart to the deck above. Same projects, same media, no
+   pinning and no synthetic scroll: the section is exactly as tall as what is
+   in it. Used under the Build Space, where the landing has already done the
+   discovering and what is wanted underneath is somewhere to read.
+   ========================================================================== */
+
+.index {
+  /* A generous lead-in so the hero does not butt straight into a list. The
+     rule is the seam: interactive field above, structured reading below. */
+  padding: calc(var(--section) * 0.85) 0 var(--section);
+  border-top: 1px solid var(--rule);
+}
+
+.index__head {
+  display: grid;
+  gap: 0.5rem 1.25rem;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+}
+.index__head .section__index { color: var(--ink-faint); }
+.index__head .section__title { grid-column: 2; margin: 0; }
+
+.index__lede {
+  grid-column: 2;
+  max-width: 46ch;
+  color: var(--ink-soft);
+  font-size: var(--t-body);
+  margin: 0.35rem 0 0;
+}
+
+.index__list {
+  list-style: none;
+  margin: 0;
+  /* padding-block only. The element also carries .shell, whose padding-inline
+     is what keeps the column off the edge of the screen and clear of the
+     floating rail; a blanket `padding: 0` silently removed it and let every
+     entry run full-bleed. */
+  padding-block: 0;
+  display: grid;
+  gap: clamp(3rem, 6vw, 6rem);
+}
+
+/* Entry ------------------------------------------------------------------- */
+
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: center;
+}
+
+@media (min-width: 52rem) {
+  .entry { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+  /* Alternating sides so the column has a rhythm instead of a left rail of
+     images. The media keeps its DOM position; only the painted order moves,
+     so the reading order stays media-then-text throughout. */
+  .index__item:nth-child(even) .entry__media { order: 2; }
+}
+
+.entry__media {
+  position: relative;
+  min-width: 0;
+}
+
+/* The shared media partial is sized for a deck panel; these are the index's
+   own proportions. Nothing else about it changes. */
+.entry__media .panel__shot,
+.entry__media .panel__plate {
+  border: 1px solid var(--rule);
+  background: var(--paper-sunk);
+  overflow: hidden;
+}
+/* Capped so eight entries stay a readable column rather than eight
+   full-height slabs. The section is as tall as its content, and its content
+   is deliberately not enormous. */
+.entry__media .panel__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: clamp(12rem, 22vw, 18rem);
+  object-fit: cover;
+  object-position: top center;
+}
+.entry__media .panel__phone { margin-inline: 0; }
+.entry__media .panel__video { height: clamp(11rem, 19vw, 16rem); }
+
+.entry__body { min-width: 0; }
+
+.entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  color: var(--ink-faint);
+  margin: 0 0 0.75rem;
+}
+.entry__status { color: #2f9e5f; }
+.entry__status--wip { color: var(--ink-soft); }
+
+.entry__name {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0;
+}
+.entry__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+}
+.entry__link .ln__arrow { transition: transform 0.3s var(--ease); }
+@media (hover: hover) {
+  .entry__link:hover .ln__arrow { transform: translate(2px, -2px); }
+}
+.entry__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.entry__kind {
+  color: var(--ink-faint);
+  margin: 0.25rem 0 0.9rem;
+}
+
+.entry__summary {
+  color: var(--ink-soft);
+  max-width: 52ch;
+  margin: 0 0 1rem;
+}
+.entry__none { color: var(--ink-faint); font-style: italic; }
+
+.entry__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+}
+.entry__chips li {
+  padding: 0.25em 0.6em;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: var(--t-mono);
+}
+
+/* Engineering chips carry their layer, so a stack reads as a stack rather
+   than a bag of names. The mark is a hairline, not a colour: the palette
+   stays the same in both lenses. */
+.entry__chips li[data-layer]::before {
+  content: "";
+  display: inline-block;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-right: 0.45rem;
+  vertical-align: 0.05em;
+  background: var(--rule-strong);
+}
+.entry__chips li[data-layer="data"]::before { border-radius: 50%; }
+.entry__chips li[data-layer="integration"]::before { transform: rotate(45deg); }
+.entry__chips li[data-layer="infra"]::before { height: 1px; width: 0.5rem; vertical-align: 0.25em; }
+
+/* Scroll reveal ----------------------------------------------------------- */
+
+/* Additive: the final state is the default, so an entry is correct with the
+   script absent, blocked, or still loading. */
+@media (prefers-reduced-motion: no-preference) {
+  /* The hidden start only exists once the script has confirmed it can undo
+     it: site.js adds .is-revealing after checking for IntersectionObserver
+     and the motion preference. Hiding content on the strength of .has-js
+     alone would leave the whole section invisible if the observer never ran,
+     and an invisible portfolio is a worse failure than an unanimated one. */
+  .index.is-revealing .index__item[data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  }
+  .index.is-revealing .index__item[data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+}

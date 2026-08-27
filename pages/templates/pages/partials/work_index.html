@@ -1,0 +1,105 @@
+{% load static %}
+{% comment %}
+The work index: the calm half of the pair.
+
+The Build Space above is for discovery — a map you move around in. This is for
+reading: every project in one column, in the curated order, with its real
+media, what it is, and a way into the case study. Nothing is pinned, nothing
+is driven, and the section is exactly as tall as its content.
+
+It is deliberately not the deck. The deck spends 5.9 viewport-heights of
+synthetic scroll to show eight panels one at a time, which is the wrong shape
+underneath a landing that has already shown all eight at once.
+
+Project data comes from PROJECTS and the media comes from the same partial the
+deck and the case studies use, so nothing here can drift from them.
+{% endcomment %}
+
+<section class="index" id="work" aria-labelledby="work-title">
+  <div class="shell index__head">
+    <span class="section__index mono">02</span>
+    <h2 class="section__title" id="work-title">Selected work</h2>
+
+    {# Experience frames the products; Engineering frames the systems. #}
+    <p class="index__lede" data-lens="experience">
+      Eight products, newest first. Open any one for the full case study.
+    </p>
+    <p class="index__lede" data-lens="engineering">
+      The same eight, described by what they are built from. Stacks are taken
+      from each repository rather than from the pitch.
+    </p>
+  </div>
+
+  <ol class="index__list shell">
+    {% for p in projects %}
+      {% comment %}
+      Ordered because the order is curated — the current mobile work leads —
+      but unnumbered, because a reader does not need the rank, and the media
+      should be the thing that pulls the eye down the column.
+      {% endcomment %}
+      <li class="index__item" data-reveal>
+        <article class="entry">
+
+          <div class="entry__media">
+            {% include "pages/partials/project/media.html" with project=p deck=False lazy=True %}
+          </div>
+
+          <div class="entry__body">
+            <p class="entry__meta mono">
+              <span>{{ p.year }}</span>
+              <span class="entry__status{% if p.status != 'live' %} entry__status--wip{% endif %}">{{ p.status }}</span>
+              <span>{{ p.role }}</span>
+            </p>
+
+            <h3 class="entry__name">
+              <a class="entry__link" href="{% url 'project_detail' p.slug %}{{ mode_query }}">
+                {{ p.name }}
+                <svg class="ln__arrow" viewBox="0 0 14 14" width="12" height="12" fill="none"
+                     stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                  <path d="M3.5 10.5L10.5 3.5M5 3.5h5.5V9"/>
+                </svg>
+              </a>
+            </h3>
+            <p class="entry__kind">{{ p.kind }}</p>
+
+            {# Experience: what it does. #}
+            <div data-lens="experience">
+              {% if p.experience.summary %}
+                <p class="entry__summary">{{ p.experience.summary }}</p>
+              {% endif %}
+              {% if p.tech %}
+                <ul class="entry__chips mono">
+                  {% for t in p.tech %}<li>{{ t }}</li>{% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            {# Engineering: how it is put together, or an honest gap. #}
+            <div data-lens="engineering">
+              {% if p.engineering.overview %}
+                <p class="entry__summary">{{ p.engineering.overview }}</p>
+              {% endif %}
+
+              {% if p.engineering.stack %}
+                <ul class="entry__chips mono">
+                  {% for item in p.engineering.stack|slice:":8" %}
+                    <li data-layer="{{ item.layer }}">{{ item.name }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+
+              {% if not p.engineering %}
+                <p class="entry__summary entry__none">
+                  The engineering detail for this project has not been published yet.
+                </p>
+              {% endif %}
+            </div>
+
+            {% include "pages/partials/project/links.html" with project=p %}
+          </div>
+
+        </article>
+      </li>
+    {% endfor %}
+  </ol>
+</section>

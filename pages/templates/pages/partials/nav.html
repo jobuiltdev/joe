@@ -1,19 +1,51 @@
 {% load static %}
 <header class="bar" id="bar">
   <div class="shell bar__inner">
-    <a class="bar__mark" href="#top" data-nav-link="top">
+    <a class="bar__mark" href="{% url 'home' %}#top" data-nav-link="top">
       <span class="bar__mark-short">JE</span>
       <span class="bar__mark-full">Joseph Edward</span>
     </a>
     <span class="bar__meta mono">{{ profile.location }}</span>
+
+    {% comment %}
+    The palette's visible entry point. The shortcut hint is decorative and
+    hidden from assistive tech, which gets the accessible name instead; on
+    touch there is no shortcut to hint at, so it is hidden there too.
+    {% endcomment %}
+    <button class="palette-trigger" type="button" data-palette-open
+            aria-label="Open command palette" aria-haspopup="dialog">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none"
+           stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>
+      </svg>
+      <span class="palette-trigger__hint mono" aria-hidden="true">
+        <b class="palette__kbd" data-palette-mod>Ctrl</b><b class="palette__kbd">K</b>
+      </span>
+    </button>
+
+    {% comment %}
+    The one global lens control. Two real links, so it works with JavaScript
+    off: each href is this same page with the mode parameter set, and the
+    server renders the matching lens. mode.js upgrades that to an in-place
+    switch with no reload.
+    {% endcomment %}
+    <div class="modes" role="group" aria-label="View mode">
+      {% for name, url in mode_urls.items %}
+        <a class="modes__opt mono" href="{{ url }}" data-mode-set="{{ name }}"
+           {% if mode == name %}aria-current="true"{% endif %}>{{ name|capfirst }}</a>
+      {% endfor %}
+    </div>
   </div>
   <div class="bar__rule"></div>
 </header>
 
-{# Floating rail. Collapsed it is a pill; hover or focus expands it to labels. #}
+{% comment %}
+Floating rail. Collapsed it is a pill; hover or focus expands it to labels.
+Anchors are absolute so the rail still navigates from a project page.
+{% endcomment %}
 <nav class="rail" id="rail" aria-label="Sections">
   <div class="rail__pill">
-    <a class="rail__avatar" href="#top" data-nav-link="top" aria-label="Back to top">
+    <a class="rail__avatar" href="{% url 'home' %}#top" data-nav-link="top" aria-label="Back to top">
       <picture>
         <source srcset="{% static 'images/avatar.webp' %}" type="image/webp">
         <img src="{% static 'images/avatar.jpg' %}" width="400" height="400"
@@ -27,7 +59,7 @@
     <ul class="rail__list">
       {% for item in nav_items %}
         <li>
-          <a class="rail__item" href="#{{ item.slug }}" data-nav-link="{{ item.slug }}">
+          <a class="rail__item" href="{% url 'home' %}#{{ item.slug }}" data-nav-link="{{ item.slug }}">
             <span class="rail__dot" aria-hidden="true"></span>
             <span class="rail__num mono" aria-hidden="true">{{ item.index }}</span>
             <span class="rail__label">{{ item.label }}</span>

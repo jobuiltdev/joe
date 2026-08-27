@@ -34,18 +34,21 @@
           <div class="field">
             <label class="field__label mono" for="f-name">Name <span aria-hidden="true">*</span></label>
             <input class="field__input" id="f-name" name="name" type="text"
+                   value="{{ submitted.name|default:'' }}"
                    autocomplete="name" required>
           </div>
 
           <div class="field">
             <label class="field__label mono" for="f-email">Email <span aria-hidden="true">*</span></label>
             <input class="field__input" id="f-email" name="email" type="email"
+                   value="{{ submitted.email|default:'' }}"
                    autocomplete="email" inputmode="email" required>
           </div>
 
           <div class="field">
             <label class="field__label mono" for="f-subject">Subject</label>
             <input class="field__input" id="f-subject" name="subject" type="text"
+                   value="{{ submitted.subject|default:'' }}"
                    placeholder="Project enquiry">
           </div>
 
@@ -53,7 +56,7 @@
             <label class="field__label mono" for="f-message">Message <span aria-hidden="true">*</span></label>
             <textarea class="field__input field__input--area" id="f-message" name="message"
                       rows="6" required
-                      placeholder="What are you building, and what do you need?"></textarea>
+                      placeholder="What are you building, and what do you need?">{{ submitted.message|default:'' }}</textarea>
           </div>
 
           <div class="form__foot">

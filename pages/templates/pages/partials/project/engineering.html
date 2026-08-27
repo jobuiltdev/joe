@@ -1,0 +1,202 @@
+{% comment %}
+The engineering lens. Takes: engineering (a project's engineering dict).
+
+Every block is optional and guarded independently. A project may record its
+stack and nothing else, and that has to render as a shorter page rather than as
+empty headings. Each block carries data-engineering so a later renderer can
+target one section without the template needing to know about it.
+
+The architecture block prints its graph as text on purpose. That is the no-JS
+baseline a future diagram renders on top of, not a placeholder for one.
+{% endcomment %}
+
+{% if engineering.overview %}
+  <div class="case__block" data-engineering="overview">
+    <p class="case__lead">{{ engineering.overview }}</p>
+  </div>
+{% endif %}
+
+{% if engineering.stack %}
+  <div class="case__block" data-engineering="stack">
+    <h3 class="case__label mono">Stack</h3>
+    <ul class="stack">
+      {% for item in engineering.stack %}
+        <li class="stack__item">
+          <span class="stack__name">{{ item.name }}</span>
+          <span class="stack__note mono">{{ item.layer }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if engineering.architecture %}
+  <div class="case__block" data-engineering="architecture">
+    <h3 class="case__label mono">Architecture</h3>
+    {% if engineering.architecture.summary %}
+      <p class="case__note">{{ engineering.architecture.summary }}</p>
+    {% endif %}
+
+    {% if engineering.architecture.nodes %}
+      <ul class="nodes">
+        {% for node in engineering.architecture.nodes %}
+          <li class="nodes__item" data-node-kind="{{ node.kind }}">
+            <span class="nodes__label">{{ node.label }}</span>
+            <span class="nodes__kind mono">{{ node.kind }}</span>
+            {% if node.note %}<span class="nodes__note">{{ node.note }}</span>{% endif %}
+            {% if node.tech %}
+              <ul class="panel__tech mono nodes__tech">
+                {% for t in node.tech %}<li>{{ t }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if engineering.architecture.edges %}
+      <h4 class="case__sublabel mono">Flow</h4>
+      <ul class="edges mono">
+        {% for edge in engineering.architecture.edges %}
+          {% comment %}
+          Resolve ids to labels inline. The graphs are small, and doing it here
+          keeps the view from having to reshape data purely for display.
+          {% endcomment %}
+          <li class="edges__item">
+            {% for n in engineering.architecture.nodes %}{% if n.id == edge.from %}{{ n.label }}{% endif %}{% endfor %}
+            <span class="edges__arrow" aria-hidden="true">&rarr;</span>
+            {% for n in engineering.architecture.nodes %}{% if n.id == edge.to %}{{ n.label }}{% endif %}{% endfor %}
+            {% if edge.label %}<span class="edges__note">{{ edge.label }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if engineering.api %}
+  <div class="case__block" data-engineering="api">
+    <h3 class="case__label mono">API</h3>
+    {% if engineering.api.style %}
+      <p class="case__note">{{ engineering.api.style }}</p>
+    {% endif %}
+    {% if engineering.api.notes %}
+      <ul class="panel__features">
+        {% for note in engineering.api.notes %}<li>{{ note }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% if engineering.api.endpoints %}
+      <ul class="routes mono">
+        {% for e in engineering.api.endpoints %}
+          <li class="routes__item">
+            <span class="routes__method">{{ e.method }}</span>
+            <span class="routes__path">{{ e.path }}</span>
+            {% if e.note %}<span class="routes__note">{{ e.note }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if engineering.data %}
+  <div class="case__block" data-engineering="data">
+    <h3 class="case__label mono">Data</h3>
+    {% if engineering.data.engine %}
+      <p class="case__note">{{ engineering.data.engine }}</p>
+    {% endif %}
+    {% if engineering.data.notes %}
+      <ul class="panel__features">
+        {% for note in engineering.data.notes %}<li>{{ note }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if engineering.auth %}
+  <div class="case__block" data-engineering="auth">
+    <h3 class="case__label mono">Authentication</h3>
+    {% if engineering.auth.method %}
+      <p class="case__note">{{ engineering.auth.method }}</p>
+    {% endif %}
+    {% if engineering.auth.roles %}
+      <ul class="panel__tech mono">
+        {% for role in engineering.auth.roles %}<li>{{ role }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% if engineering.auth.notes %}
+      <ul class="panel__features">
+        {% for note in engineering.auth.notes %}<li>{{ note }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if engineering.integrations %}
+  <div class="case__block" data-engineering="integrations">
+    <h3 class="case__label mono">Integrations</h3>
+    <ul class="stack">
+      {% for i in engineering.integrations %}
+        <li class="stack__item">
+          <span class="stack__name">{{ i.name }}</span>
+          <span class="stack__note mono">{{ i.purpose }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if engineering.capabilities %}
+  <div class="case__block" data-engineering="capabilities">
+    <h3 class="case__label mono">Technical capabilities</h3>
+    <ul class="panel__features">
+      {% for c in engineering.capabilities %}<li>{{ c }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if engineering.testing %}
+  <div class="case__block" data-engineering="testing">
+    <h3 class="case__label mono">Testing</h3>
+    {% if engineering.testing.notes %}
+      <ul class="panel__features">
+        {% for note in engineering.testing.notes %}<li>{{ note }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if engineering.infra %}
+  <div class="case__block" data-engineering="infra">
+    <h3 class="case__label mono">Infrastructure</h3>
+    {% if engineering.infra.hosting %}
+      <ul class="panel__tech mono">
+        {% for h in engineering.infra.hosting %}<li>{{ h }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% if engineering.infra.requires %}
+      <ul class="panel__tech mono">
+        {% for r in engineering.infra.requires %}<li>{{ r }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% if engineering.infra.notes %}
+      <ul class="panel__features">
+        {% for note in engineering.infra.notes %}<li>{{ note }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if engineering.decisions %}
+  <div class="case__block" data-engineering="decisions">
+    <h3 class="case__label mono">Notable decisions</h3>
+    <ul class="calls">
+      {% for d in engineering.decisions %}
+        <li class="calls__item">
+          <p class="calls__choice">{{ d.choice }}</p>
+          <p class="calls__why">{{ d.rationale }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}

@@ -10,6 +10,7 @@ db.sqlite3
 
 # Ignore virtual environments
 venv/
+.venv/
 
 # static/ is the SOURCE directory and is tracked.
 # staticfiles/ is the collectstatic output, but it stays tracked too: Vercel's

@@ -7,6 +7,12 @@
 (function () {
   'use strict';
 
+  var motion = (window.JE || {}).motion;
+  if (!motion) {
+    if (window.console) console.error('deck.js needs motion.js, which did not load');
+    return;
+  }
+
   var deck = document.querySelector('[data-deck]');
   if (!deck) return;
 
@@ -26,7 +32,6 @@
   var motionOk = window.matchMedia('(prefers-reduced-motion: no-preference)');
 
   var pinned = false;
-  var ticking = false;
   var lastIndex = -1;
 
   function canPin() { return wide.matches && motionOk.matches; }
@@ -186,18 +191,9 @@
     videos.forEach(function (v) { stack.observe(v); });
   }
 
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(function () {
-      try {
-        render();
-      } finally {
-        // Always clear the guard. A throw here would freeze every later frame.
-        ticking = false;
-      }
-    });
-  }
+  // The ticking guard and the scroll listener live in motion.js now, shared
+  // with the nav rather than duplicated here. render is called directly.
+
 
   /* --- jumping ---------------------------------------------------------- */
 
@@ -251,7 +247,7 @@
     syncVideo();
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
+  motion.onScroll(render);
   window.addEventListener('resize', sync);
   window.addEventListener('orientationchange', sync);
 

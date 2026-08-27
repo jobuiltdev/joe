@@ -1,23 +1,32 @@
 {% load static %}<!doctype html>
-<html lang="en">
+<html lang="en" data-mode="{{ mode }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>{% block title %}Joseph Edward, Full-stack web &amp; mobile engineer{% endblock %}</title>
-<meta name="description" content="{% block description %}Joseph Edward is a full-stack web and mobile engineer building secure, scalable products for startups and businesses with Django, Next.js and React Native.{% endblock %}">
+{% comment %}
+The head is built once from the meta_* context the view supplies, so a page
+with its own identity overrides values rather than restating the whole block.
+The title and description keep their blocks so a template can still override
+them directly without touching the view.
+{% endcomment %}
+<title>{% block title %}{{ meta_title }}{% endblock %}</title>
+<meta name="description" content="{% block description %}{{ meta_description }}{% endblock %}">
 <meta name="author" content="Joseph Edward">
 <meta name="theme-color" content="#faf9f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#131210" media="(prefers-color-scheme: dark)">
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="Joseph Edward, Full-stack web &amp; mobile engineer">
-<meta property="og:description" content="Secure, scalable products for startups and businesses. Django, Next.js, React Native and Expo.">
-<meta property="og:image" content="{% static 'images/marketbrainers.jpg' %}">
+<link rel="canonical" href="{{ meta_url }}">
+
+<meta property="og:type" content="{{ meta_type }}">
+<meta property="og:url" content="{{ meta_url }}">
+<meta property="og:title" content="{{ meta_title }}">
+<meta property="og:description" content="{{ meta_share_text }}">
+<meta property="og:image" content="{{ meta_image }}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Joseph Edward, Full-stack web &amp; mobile engineer">
-<meta name="twitter:description" content="Secure, scalable products for startups and businesses. Django, Next.js, React Native and Expo.">
-<meta name="twitter:image" content="{% static 'images/marketbrainers.jpg' %}">
+<meta name="twitter:title" content="{{ meta_title }}">
+<meta name="twitter:description" content="{{ meta_share_text }}">
+<meta name="twitter:image" content="{{ meta_image }}">
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%2316150f'/><text x='50' y='50' dy='.36em' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' font-weight='600' font-size='46' fill='%23faf9f7'>JE</text></svg>">
 
@@ -25,7 +34,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% comment %}
+The stylesheet is split by ownership rather than kept as one growing file, so
+a new system can arrive as its own sheet instead of being appended to
+everything else. Order is the cascade: foundation first, then chrome, then the
+sections in the order the page renders them. Separate link tags rather than
+@import, because imports are discovered one at a time and serialise; these
+fetch in parallel and are content-hashed and immutable behind the CDN.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/foundation.css' %}">
+<link rel="stylesheet" href="{% static 'css/chrome.css' %}">
+<link rel="stylesheet" href="{% static 'css/intro.css' %}">
+<link rel="stylesheet" href="{% static 'css/about.css' %}">
+<link rel="stylesheet" href="{% static 'css/work.css' %}">
+<link rel="stylesheet" href="{% static 'css/case.css' %}">
+<link rel="stylesheet" href="{% static 'css/contact.css' %}">
+<link rel="stylesheet" href="{% static 'css/palette.css' %}">
+{% if build_nodes %}<link rel="stylesheet" href="{% static 'css/build.css' %}">{% endif %}
 
 {% comment %}
 Blocking, so theme and intro state are settled before the first paint.
@@ -42,6 +67,32 @@ Deferring either one means a visible flash of the wrong thing.
       if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t);
     } catch (e) {}
 
+    // Mode resolves the same way theme does and for the same reason: the
+    // lenses are hidden with CSS keyed off this attribute, so it has to be
+    // settled before the first paint or one lens paints and is then replaced.
+    //
+    // Order is explicit URL parameter, then stored preference, then the
+    // default. The server already applied steps 1 and 3; this only fills in
+    // the stored preference, which the server cannot see.
+    var MODES = { experience: 1, engineering: 1 };
+    var urlMode = null;
+    var found = /[?&]mode=([^&#]*)/.exec(window.location.search);
+    if (found) {
+      var candidate = decodeURIComponent(found[1]);
+      if (MODES[candidate] === 1) urlMode = candidate;
+    }
+
+    if (urlMode) {
+      // An explicit link wins, and becomes the preference from here on.
+      root.setAttribute('data-mode', urlMode);
+      try { localStorage.setItem('mode', urlMode); } catch (e) {}
+    } else {
+      try {
+        var stored = localStorage.getItem('mode');
+        if (MODES[stored] === 1) root.setAttribute('data-mode', stored);
+      } catch (e) {}
+    }
+
     root.classList.add('has-js');
 
     var seen = false;
@@ -49,7 +100,12 @@ Deferring either one means a visible flash of the wrong thing.
     var reduced = window.matchMedia
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (!seen && !reduced) {
+    // Only the page that owns the intro may hide itself behind it. intro.js
+    // returns early when there is no hero, so setting this anywhere else
+    // would leave the preloader up with nothing left to dismiss it.
+    var wantsIntro = {% if show_intro %}true{% else %}false{% endif %};
+
+    if (wantsIntro && !seen && !reduced) {
       root.classList.add('intro-pending');
       try { if (store) store.setItem('intro-seen', '1'); } catch (e) {}
     }
@@ -62,8 +118,9 @@ Deferring either one means a visible flash of the wrong thing.
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
-{% include "pages/partials/preloader.html" %}
+{% if show_intro %}{% include "pages/partials/preloader.html" %}{% endif %}
 {% include "pages/partials/nav.html" %}
+{% include "pages/partials/palette.html" %}
 
 <main id="main">
   {% block content %}{% endblock %}
@@ -87,10 +144,19 @@ Deferring either one means a visible flash of the wrong thing.
   </div>
 </footer>
 
+{% comment %}
+Order matters and defer preserves it. motion.js defines the shared frame
+scheduler that nav.js and deck.js subscribe to, so it goes first.
+{% endcomment %}
+<script src="{% static 'js/motion.js' %}" defer></script>
 <script src="{% static 'js/site.js' %}" defer></script>
 <script src="{% static 'js/nav.js' %}" defer></script>
 <script src="{% static 'js/intro.js' %}" defer></script>
 <script src="{% static 'js/deck.js' %}" defer></script>
+<script src="{% static 'js/mode.js' %}" defer></script>
+{# After mode.js: the palette switches modes through it rather than reimplementing it. #}
+<script src="{% static 'js/palette.js' %}" defer></script>
+{% if build_nodes %}<script src="{% static 'js/build.js' %}" defer></script>{% endif %}
 {% block extra_js %}{% endblock %}
 </body>
 </html>

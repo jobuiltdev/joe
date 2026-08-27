@@ -39,11 +39,25 @@ No Tailwind, no bundler, no `package.json`. The design system lives in
 
 ## Local setup
 
+**Use Python 3.12.** Django 4.2 supports 3.8 through 3.12, and this project is
+pinned to 4.2. Newer interpreters are not merely unsupported in theory: on
+Python 3.14 the Django test client raises `AttributeError` from
+`Context.__copy__` as soon as the test runner instruments template rendering,
+which takes down every request-based test with a misleading traceback.
+
 ```bash
-pip install -r requirements.txt
+py -3.12 -m venv .venv        # or your 3.12 interpreter of choice
+.venv/Scripts/python -m pip install -r requirements.txt   # .venv/bin on macOS and Linux
 cp .env.example .env          # then add your RESEND_API_KEY
-DJANGO_DEBUG=1 python manage.py runserver
+DJANGO_DEBUG=1 .venv/Scripts/python manage.py runserver
+.venv/Scripts/python manage.py test pages                 # regression suite
 ```
+
+One thing the interpreter version decides for you: `{% include ... only %}`
+also copies the Context and so fails on 3.14. The templates avoid `only` and
+pass explicit `with` arguments instead, because production runs Python 3.13 and
+that combination has not been verified there. Keep it that way unless you test
+it on the deployment runtime.
 
 `DJANGO_DEBUG=1` matters locally: with it off, Django caches templates and your
 edits stay invisible until you restart.
@@ -77,6 +91,21 @@ Media is optional, and the panel takes whichever of these it finds first:
 `links` and `repos` are both lists and both may be empty: a mobile app has no
 site to visit, and a private repo has no source worth linking to a 404.
 
+Copy is split into two lenses over the same shared facts:
+
+- `experience` holds `summary` and `features`, the product-facing story. This is
+  what the work panel renders today.
+- `engineering` holds how it is actually built, and every key in it is optional:
+  `overview`, `stack`, `architecture`, `api`, `data`, `auth`, `integrations`,
+  `capabilities`, `testing`, `infra`, `decisions`. `architecture` is a graph of
+  `nodes` and `edges` so it can be drawn generically rather than per project.
+
+Engineering values come from each project's own repository: dependency
+manifests, app layout, deploy descriptors, or the running deployment. If it is
+not verified, the key is left out. The top-level `tech` list is separate on
+purpose: it is the product-facing chip row, and it is allowed to differ from
+`engineering.stack`, which is the verified implementation.
+
 Images are committed pre-optimized (resized to display size, webp + jpg pairs,
 lowercase names because Vercel's filesystem is case-sensitive).
 
@@ -95,6 +124,60 @@ ffmpeg -ss 5 -i static/video/<slug>-demo.mp4 -frames:v 1 -q:v 5 \
 
 That took the two current demos from 8.1 MB to 1.2 MB with the UI text still
 legible. Check the poster frame actually shows something worth looking at.
+
+## Performance baseline
+
+Recorded before any Build Space work, so a later claim that performance is fine
+has something to be measured against. Source sizes, uncompressed.
+
+| | Home | Case study |
+|---|---|---|
+| Initial HTML | 57.7 KB | 22.8 KB |
+| Stylesheets | 7 (52.3 KB total) | same |
+| Scripts | 6 (32.0 KB total) | same |
+| Third-party requests | 3 (Google Fonts) | same |
+
+Media on disk: 0.83 MB of images, 1.58 MB of video. The home page loads no
+image eagerly, lazy-loads five, and holds three `<video>` elements at
+`preload="metadata"`, so only posters arrive until a clip is played.
+
+Eight projects, eight deck panels, and sixteen lens blocks because both lenses
+ship in the HTML and CSS hides one.
+
+Frame systems: one shared scroll scheduler in `motion.js` serving `nav.js` and
+`deck.js`; `intro.js` runs its own progress loop with its own hard stop;
+`mode.js` uses a one-shot frame to correct scroll after a lens swap.
+
+The preloader runs on the home page only, once per session, with a 700 ms floor
+and a 2.5 s ceiling.
+
+## The contact contract
+
+The contact form is the only part of this site that does real work, and it is
+the part a redesign is most likely to break silently: a renamed field costs an
+enquiry and raises no error anywhere. Any future contact UI has to keep all of
+this, and `pages/tests.py` fails if it does not.
+
+| | Contract |
+|---|---|
+| Endpoint | `POST /` (the home view). Not a separate URL. |
+| Action | `{% url 'home' %}#contact`, so the reply lands back at the form |
+| Fields | `name`, `email`, `subject`, `message` (exactly these names) |
+| Required | `name`, `email`, `message`. `subject` is optional |
+| CSRF | `{% csrf_token %}` required; enforced by middleware, tested at 403 |
+| Whitespace | Values are stripped; whitespace-only counts as missing |
+| Success | 302 to `/#contact` and a success message naming the sender |
+| Validation failure | 200, re-rendered in place, error message, nothing sent |
+| Send failure | 200, re-rendered, error message offering the direct address |
+| GET | Never sends mail |
+
+Nothing is hidden in the form and there are no other assumptions: the view
+reads those four `request.POST` keys and nothing else.
+
+The mail boundary is `pages/mail.py`. `send_contact_message(name, email,
+subject, message)` raises on any failure and the view decides what the visitor
+sees. That split exists so the contact path can be tested without sending real
+mail, and so a future UI keeps talking to the same proven backend.
 
 ## Deploying
 
