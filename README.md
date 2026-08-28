@@ -3,13 +3,25 @@
 A single-page portfolio for a full-stack web and mobile engineer. Django on the
 back, hand-authored CSS on the front, no build step.
 
+The landing is a **Build Space**: the projects plotted as a map around the name
+on a pointer device, and a swipeable card track on a phone. The previous
+landing is still here and still one environment variable away.
+
 Live: https://joewebs.vercel.app
 
 ## What's here
 
-- **One page.** Hero, about, work, contact. The old `/about/`, `/projects/` and
-  `/contact/` URLs 301 to the matching anchor.
-- **Preloader into a typing intro.** The preloader tracks real asset loading
+- **One page.** Landing, about, work, contact. The old `/about/`, `/projects/`
+  and `/contact/` URLs 301 to the matching anchor. Each project also has a case
+  study at `/work/<slug>/`.
+- **Two lenses.** An Experience / Engineering switch in the top bar, held in
+  `data-mode` on the root element and resolved before first paint. Experience
+  is the product; Engineering is the verified implementation, and the two are
+  allowed to disagree.
+- **Command palette.** Ctrl/Cmd-K, or the search button in the bar. Projects,
+  sections, both lenses and the outbound links, all derived from the content
+  module.
+- **Preloader into a typing intro.** Legacy landing only. The preloader tracks real asset loading
   (fonts, hero image, `load`) with a 700 ms floor and a 2.5 s hard ceiling,
   stepping a status line from "Loading portfolio" through to "Ready", then
   wipes up into an IDE card that types itself out. Skippable on any input,
@@ -19,9 +31,13 @@ Live: https://joewebs.vercel.app
   theme toggle. Hover or keyboard focus expands it to labels. Below 56rem it
   becomes a dock at the bottom of the screen, in thumb reach, with labels
   shown outright since touch has no hover to expand them.
-- **Pinned project deck.** The work section is `(panels + 1) × 100vh`; scroll
-  progress through that range drives a horizontal track. Unpins into a plain
-  vertical stack below 900×620 or under reduced motion.
+- **Pinned project deck.** Legacy landing only. The work section is
+  `(panels + 1) × 100vh`; scroll progress through that range drives a
+  horizontal track. Unpins into a plain vertical stack below 900×620 or under
+  reduced motion.
+- **Work index.** What sits under the Build Space instead of the deck: the same
+  projects and the same media, as a readable column with no pinning and no
+  synthetic scroll. Clips play as they scroll into view, one at a time.
 - **Light and dark**, with the theme resolved by a blocking head script so there
   is no flash of the wrong palette.
 
@@ -35,7 +51,9 @@ Django 4.2 · Whitenoise · Resend (contact form) · vanilla CSS and JS ·
 Schibsted Grotesk / Instrument Serif / JetBrains Mono.
 
 No Tailwind, no bundler, no `package.json`. The design system lives in
-`static/css/main.css` as CSS custom properties.
+`static/css/foundation.css` as CSS custom properties; the rest of the sheets
+are one per surface and are loaded together, except `build.css`, which is only
+sent when the Build Space is the landing.
 
 ## Local setup
 
@@ -66,17 +84,45 @@ edits stay invisible until you restart.
 
 ```
 pages/content.py                  all copy and project data. Edit this, not the templates
+pages/layout.py                   where each project sits on the map. Presentation, not fact
+pages/mail.py                     the Resend boundary, so the contact path can be tested
 pages/views.py                    one view; GET renders the page, POST is the contact form
 templates/base.html               head, nav include, footer
-pages/templates/pages/partials/   preloader, nav, hero, about, work, contact
-static/css/main.css               the whole design system
-static/js/                        intro.js, nav.js, deck.js, site.js
+pages/templates/pages/partials/   nav, palette, preloader, hero, build_space,
+                                  about, work, work_index, contact
+pages/templates/pages/partials/project/   media, links, engineering — shared by the
+                                  deck, the index and the case studies
+static/css/foundation.css         tokens and the type scale
+static/css/                       chrome, intro, about, work, case, contact,
+                                  palette, build — one sheet per surface
+static/js/                        motion, site, nav, intro, deck, mode, palette, build
+tools/hittest.js                  paste into the console: asserts every control
+                                  can actually receive a pointer event
 ```
+
+### Landings
+
+Which landing renders is a deploy setting, not a user-facing toggle:
+
+```bash
+                              # unset: the Build Space
+JOE_LANDING=legacy manage.py runserver    # the typed hero and the pinned deck
+```
+
+Set `JOE_LANDING` in the Vercel dashboard to switch the deployed site; an
+unrecognised value falls back to the default rather than to a blank page. The
+registry is `views.LANDINGS`, and each entry names its landing template, its
+work section, and whether it owns the preloader — so adding a third landing
+never means a second home page to keep in sync.
 
 ### Adding a project
 
-Append a dict to `PROJECTS` in `pages/content.py`. The deck picks it up, and the
-panel count, counter and progress segments are all derived.
+Append a dict to `PROJECTS` in `pages/content.py`. Every surface picks it up:
+the map, the work index, the deck, the palette and the case-study routes are
+all derived, and the deck's panel count, counter and progress segments with
+them. A project with no entry in `pages/layout.py` still renders on the map,
+placed on a ring rather than dropped, because an unplaced project is a layout
+oversight and hiding it would be the wrong failure.
 
 Media is optional, and the panel takes whichever of these it finds first:
 
@@ -127,8 +173,10 @@ legible. Check the poster frame actually shows something worth looking at.
 
 ## Performance baseline
 
-Recorded before any Build Space work, so a later claim that performance is fine
-has something to be measured against. Source sizes, uncompressed.
+Recorded before any Build Space work, against the legacy landing, so a later
+claim that performance is fine has something to be measured against. It is a
+historical baseline, not a description of what ships today. Source sizes,
+uncompressed.
 
 | | Home | Case study |
 |---|---|---|
@@ -142,11 +190,16 @@ image eagerly, lazy-loads five, and holds three `<video>` elements at
 `preload="metadata"`, so only posters arrive until a clip is played.
 
 Eight projects, eight deck panels, and sixteen lens blocks because both lenses
-ship in the HTML and CSS hides one.
+ship in the HTML and CSS hides one. The Build Space landing replaces the deck
+with the work index, so it carries the same eight projects without the deck's
+five-and-a-bit viewports of synthetic scroll.
 
 Frame systems: one shared scroll scheduler in `motion.js` serving `nav.js` and
 `deck.js`; `intro.js` runs its own progress loop with its own hard stop;
-`mode.js` uses a one-shot frame to correct scroll after a lens swap.
+`mode.js` uses a one-shot frame to correct scroll after a lens swap. The Build
+Space and the work index both use IntersectionObserver rather than scroll
+handlers — one to read which card the track landed on, one to play a clip as it
+comes into view.
 
 The preloader runs on the home page only, once per session, with a 700 ms floor
 and a 2.5 s ceiling.
@@ -208,6 +261,10 @@ caching and pushes against the function response size limit.
 - `SECRET_KEY` and `ALLOWED_HOSTS` are still hardcoded in `joe_webs/settings.py`.
   Both should move to environment variables. Set them in Vercel first, or the
   deploy will break.
+- The mode switch and the palette trigger sit in a bar that is deliberately
+  transparent to the pointer, so anything added to it has to opt back in.
+  `.bar__inner > *` does that as a group; naming controls one by one is what
+  left two of them unclickable for several phases.
 
 ## Contact
 
