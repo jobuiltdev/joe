@@ -125,11 +125,12 @@ RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 CONTACT_EMAIL = 'josephedward201@gmail.com'
 
 # Which landing the home page renders. Not user-facing and not a query
-# parameter: this is a deploy-time seam so a replacement landing can be built
-# and switched on without a second home page to keep in sync. Unset means the
-# current one, and an unrecognised value falls back to it rather than to a
-# blank page. See views.LANDINGS for the registry.
-LANDING = os.environ.get('JOE_LANDING', 'legacy')
+# parameter: this is a deploy-time seam so a landing can be swapped without a
+# second home page to keep in sync. Unset means the Build Space; set
+# JOE_LANDING=legacy to go back to the typed hero and the pinned deck. An
+# unrecognised value falls back to the default rather than to a blank page.
+# See views.LANDINGS for the registry.
+LANDING = os.environ.get('JOE_LANDING', 'build')
 
 
 # Static files (CSS, JavaScript, Images)

@@ -19,6 +19,7 @@
   var motion = (window.JE || {}).motion;
   var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node]'));
   var wires = Array.prototype.slice.call(root.querySelectorAll('[data-wire]'));
+  var ticks = Array.prototype.slice.call(root.querySelectorAll('[data-tick]'));
   if (!nodes.length) return;
 
   var field = root.querySelector('[data-build-field]');
@@ -29,6 +30,15 @@
   // second follows it. On a pointer device hover does the opening, so the
   // first click should just go.
   var canHover = window.matchMedia('(hover: hover)').matches;
+  /* Whether the phone layout is in force.
+
+     Read from the layout the stylesheet produced rather than by repeating its
+     breakpoint here: the track is the only thing that scrolls horizontally,
+     so its own overflow answers the question. One definition of where the
+     layout changes, in the file that decides it. */
+  function onTrack() {
+    return !!nodeLayer && getComputedStyle(nodeLayer).overflowX === 'auto';
+  }
   var reduced = function () { return motion ? motion.reduced() : false; };
 
   /* --- active state ----------------------------------------------------- */
@@ -65,11 +75,15 @@
     var started = clip.play();
     if (!started || !started.then) return;
 
+    /* Both branches check the node is still the subject. Moving on pauses the
+       clip, which rejects the play promise it was still waiting on, and
+       without this the card you just swiped away from would be left wearing
+       the "autoplay refused" mark for a refusal that never happened. */
     started.then(function () {
-      node.setAttribute('data-clip', 'playing');
+      if (active === node) node.setAttribute('data-clip', 'playing');
     }).catch(function () {
-      // Blocked by policy, or the node closed before the clip was ready.
-      node.setAttribute('data-clip', 'blocked');
+      // Blocked by policy, rather than interrupted by us.
+      if (active === node) node.setAttribute('data-clip', 'blocked');
     });
   }
 
@@ -140,6 +154,14 @@
     });
   }
 
+  /* Track position, on the phone layout. The wires are hidden there, so this
+     is what says where you are among eight. */
+  function markTick(slug) {
+    ticks.forEach(function (tick) {
+      tick.classList.toggle('is-on', tick.dataset.tick === slug);
+    });
+  }
+
   function setActive(node) {
     if (active === node) return;
 
@@ -151,6 +173,7 @@
     active = node;
     root.classList.toggle('has-active', !!node);
     lightWires(node ? node.dataset.node : null);
+    markTick(node ? node.dataset.node : null);
 
     if (!node) return;
 
@@ -176,6 +199,55 @@
     });
   }
 
+  /* --- the phone track --------------------------------------------------- */
+
+  /* On the phone layout the nodes are a horizontal scroll-snap track, and
+     where that layout begins is the stylesheet's business. The gesture and
+     the snapping are entirely the browser's; all this does is read which card
+     came to rest and hand it to setActive, which already knows what being the
+     subject means — the clip, the panel, the tick.
+
+     An observer rather than a scroll handler: the answer is "which card is
+     centred", which is what intersection against the track already computes,
+     and it costs nothing between swipes. */
+  var trackWatch = null;
+
+  function watchTrack() {
+    if (trackWatch || !nodeLayer) return;
+
+    var seen = [];
+    trackWatch = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var i = nodes.indexOf(entry.target);
+        if (i > -1) seen[i] = entry.intersectionRatio;
+      });
+
+      var best = -1;
+      var bestRatio = 0;
+      seen.forEach(function (ratio, i) {
+        if (ratio > bestRatio) { bestRatio = ratio; best = i; }
+      });
+
+      // A clear winner only. Mid-swipe both neighbours are partly visible, and
+      // switching on every frame of that would flicker the clip and the tick.
+      if (best > -1 && bestRatio > 0.62) setActive(nodes[best]);
+    }, { root: nodeLayer, threshold: [0, 0.3, 0.5, 0.62, 0.8, 1] });
+
+    nodes.forEach(function (node) { trackWatch.observe(node); });
+  }
+
+  function unwatchTrack() {
+    if (!trackWatch) return;
+    trackWatch.disconnect();
+    trackWatch = null;
+    setActive(null);
+  }
+
+  function syncLayout() {
+    if (onTrack()) watchTrack();
+    else unwatchTrack();
+  }
+
   /* --- wiring ----------------------------------------------------------- */
 
   nodes.forEach(function (node) {
@@ -199,8 +271,22 @@
     link.addEventListener('click', function (e) {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
 
-      // Touch: open the project in place first. Someone who wants the case
-      // study taps the same node again.
+      /* On the track, tapping a neighbour brings it into focus rather than
+         navigating: the card you can only half see is not the one you meant
+         to open. Scrolling it to centre lets the observer make it active, so
+         there is still one place that decides what is the subject. */
+      if (onTrack() && active !== node) {
+        e.preventDefault();
+        node.scrollIntoView({
+          behavior: reduced() ? 'auto' : 'smooth',
+          inline: 'center',
+          block: 'nearest'
+        });
+        return;
+      }
+
+      // Touch without the track (a tablet in the constellation layout): open
+      // the project in place first, and follow it on the second tap.
       if (!canHover && active !== node) {
         e.preventDefault();
         setActive(node);
@@ -214,6 +300,7 @@
   // Clicking the empty field clears the selection on touch, which is the only
   // way back out of an opened node.
   root.addEventListener('click', function (e) {
+    if (onTrack()) return;   // the track always has a subject
     if (!canHover && active && !e.target.closest('[data-node]')) setActive(null);
   });
 
@@ -271,8 +358,12 @@
   /* A resize changes which side of the stage has room, so a panel left open
      across one has to be re-placed or it can end up clipped. */
   window.addEventListener('resize', function () {
+    // A rotation or a resized window can cross the breakpoint, which changes
+    // which of the two layouts is running.
+    syncLayout();
     if (active) placePanel(active);
   }, { passive: true });
 
   syncLinks();
+  syncLayout();
 })();

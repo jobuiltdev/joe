@@ -655,85 +655,272 @@
   }
 }
 
-/* Mobile: an ordered map, not a squeezed constellation --------------------- */
+/* Mobile: a swipeable track, not a squeezed constellation ------------------
+   The constellation is a pointer instrument: it depends on hovering points
+   plotted in a plane. Squeezed onto a phone it became a stacked list, which
+   was accurate and completely inert.
+
+   The touch reading of the same idea is a track. One project held in focus,
+   its neighbours visibly waiting either side, moved by the same swipe the
+   platform already provides. Snapping is native, so the gesture belongs to
+   the browser and stays stable; the script only reads which card landed.
+   ========================================================================== */
+
+.build__ticks { display: none; }
 
 @media (max-width: 60rem) {
   .build {
     display: block;
+    /* The hero is as tall as its content here, so it can grow rather than
+       clip. No viewport unit is involved: 100vh on iOS measures the tallest
+       layout, which would reserve space the URL bar is using. */
     min-height: 0;
-    padding-bottom: 2rem;
+    /* Longhands, so the inline gutter the track full-bleeds out of is kept.
+       env() falls back to 0 wherever there are no insets to honour. */
+    padding-top: calc(var(--bar-h) + env(safe-area-inset-top, 0px) + 1rem);
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
   }
 
-  /* The wires describe a composition that no longer exists here. */
-  .build__field { display: none; }
-
-  .build__identity { text-align: left; margin-inline: 0; padding-bottom: 2rem; }
-  .build__lede { margin-inline: 0; }
-
-  .build__nodes {
-    position: static;
-    display: grid;
-    gap: 0.5rem;
-    border-top: 1px solid var(--rule);
+  /* The grid stays. It is the ground the whole hero sits on, and the one part
+     of the desktop field that still means something at this width. The wires
+     do not: they describe coordinates that no longer exist here. */
+  .build__field { display: block; }
+  .build__wires { display: none; }
+  .build__grid {
+    -webkit-mask-image: linear-gradient(to bottom, #000 25%, transparent 95%);
+    mask-image: linear-gradient(to bottom, #000 25%, transparent 95%);
   }
 
-  .build__node {
-    position: static;
-    transform: none;
-    animation: none;
-    border-bottom: 1px solid var(--rule);
-    opacity: 1;
-  }
-  /* Nothing recedes on touch: every project stays equally reachable. */
-  [data-build].has-active .build__node { opacity: 1; }
+  .build__identity { text-align: left; margin-inline: 0; padding-bottom: 1.4rem; }
+  .build__lede { margin-inline: 0; max-width: 30ch; }
 
-  /* And the identity does not recede either. Stepping the name back is a
-     composition device for the constellation, where the preview opens over
-     the middle of the stage. Here it expands inline in a list well below the
-     name, so dimming the hero buys nothing and washes it out for the whole
-     time a reader is browsing. */
+  /* The name does not recede here. Stepping it back is a composition device
+     for the constellation, where the preview opens over the middle of the
+     stage; the track sits below the name and never covers it. */
   [data-build].has-active .build__identity { opacity: 1; transform: none; }
 
-  .build__hit { padding: 0.9rem 0.25rem; min-height: 3.25rem; gap: 0.75rem; }
-  .build__node--primary .build__dot { width: 0.6rem; height: 0.6rem; box-shadow: none; }
+  /* --- the track --------------------------------------------------------- */
 
-  /* The list has its own rules, so the plotted-point ring would be noise. */
-  .build__dot { width: 0.35rem; height: 0.35rem; }
+  .build__nodes {
+    /* One rhythm for the whole strip: every card the same width, the same gap
+       between them, and the same slice of the next one showing past the right
+       edge. Derived rather than picked, so the peek is identical at every
+       screen size and on every card.
 
-  /* Bigger here than on the constellation: it is the only image in the row
-     and there is width to spend once the nodes are stacked. */
-  .build__thumb { width: 2.4rem; border-radius: 0.3rem; }
-  .build__node.is-active .build__thumb { transform: none; }
+       Start alignment, not centre: a card rests against the gutter with the
+       next one just visible beyond it, which is what makes the position of
+       the strip readable at a glance. */
+    --peek: 3.25rem;
+    --gap: 0.75rem;
+    /* Against the viewport, not a percentage: a percentage flex-basis resolves
+       against the track's content box, which already has the padding below
+       taken out of it, so the gutter and the peek would be subtracted twice
+       and every card would come up short. */
+    --card: calc(100vw - var(--gutter) - var(--gap) - var(--peek));
 
-  /* Full width on a phone rather than the desktop's 15rem measure. */
+    position: static;
+    display: flex;
+    align-items: stretch;
+    gap: var(--gap);
+
+    /* Full-bleed out of the section gutter. The trailing padding is exactly
+       the gap plus the peek, which is what lets the last card come to rest
+       against the same gutter as the first instead of jamming flush right. */
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter) calc(var(--gap) + var(--peek));
+    scroll-padding-inline: var(--gutter);
+    /* Room below for the focused card's shadow, which overflow-y would
+       otherwise cut off square. */
+    padding-block: 1.5rem 1.75rem;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    /* A swipe that runs out of track must not become a page gesture. */
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .build__nodes::-webkit-scrollbar { display: none; }
+
+  .build__node {
+    position: relative;
+    /* Undo the constellation's positioning in full. A plotted node is placed
+       with left/top from its --nx/--ny and then pulled back onto its own
+       centre with translate(-50%, -50%); in the strip it is an ordinary flex
+       item and must carry none of that.
+
+       Both matter and both bite differently. Under `relative` the leftover
+       left/top become offsets from the flow position, which shunted each card
+       sideways by its desktop x-coordinate. The leftover transform moved every
+       card up by half its own height and left by half its width, putting the
+       top of each card above the section — where `overflow: hidden` clipped
+       it out of reach. */
+    inset: auto;
+    transform: none;
+    animation: none;
+    flex: 0 0 var(--card);
+    scroll-snap-align: start;
+    /* One card per swipe: the track is for choosing, not for flicking past. */
+    scroll-snap-stop: always;
+
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 0.85rem;
+    overflow: hidden;
+
+    /* Deliberately no per-card scale. Cards that grow and shrink as focus
+       passes slide against each other and the strip reads as scattered; with
+       the geometry fixed the whole track moves as one piece and only its
+       weight changes. */
+    opacity: 0.55;
+    transition: opacity var(--b-base) var(--b-ease),
+                border-color var(--b-base) var(--b-ease),
+                box-shadow var(--b-base) var(--b-ease);
+  }
+
+  /* Every card the same width. Lead work earns its place by order, by type
+     and by carrying a demo, not by breaking the rhythm of the strip. */
+  .build__node--secondary { flex-basis: var(--card); }
+
+  /* The desktop dims everything but the subject to 0.32. Here the neighbour
+     is a visible slice of the strip and has to stay legible. */
+  [data-build].has-active .build__node { opacity: 0.55; }
+  [data-build].has-active .build__node.is-active,
+  .build__node.is-active {
+    opacity: 1;
+    border-color: var(--rule-strong);
+    box-shadow: 0 1.25rem 2.5rem -1.25rem rgb(0 0 0 / 0.3);
+  }
+
+  /* The card has three parts but only two elements, so the wrapper steps out
+     of the box tree and lets media, name and facts order themselves. */
+  .build__detail {
+    display: contents;
+    opacity: 1;
+    visibility: visible;
+  }
+  .build__media { order: 1; }
+  .build__hit   { order: 2; }
+  .build__facts { order: 3; }
+
+  /* --- media ------------------------------------------------------------- */
+
+  /* A fixed height rather than an aspect ratio: portrait phone clips and
+     landscape screenshots have to produce cards of the same shape. */
+  .build__media {
+    height: 13rem;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--paper-sunk);
+    border-bottom: 1px solid var(--rule);
+  }
+  .build__phone { margin: 0; padding: 0.25rem; border-radius: 0.9rem; }
+  .build__video { height: 12.2rem; border-radius: 0.7rem; }
+  .build__window { max-width: none; width: 100%; height: 100%; border: 0; }
+  .build__window-bar { display: none; }
+  .build__window picture,
+  .build__window img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+  /* --- label and facts --------------------------------------------------- */
+
+  .build__hit {
+    padding: 0.9rem 0.95rem 0.4rem;
+    min-height: 0;
+    gap: 0.6rem;
+    align-items: flex-start;
+    white-space: normal;
+    border-radius: 0;
+    background: none;
+  }
+  .build__node.is-active .build__hit {
+    background: none;
+    transform: none;
+    box-shadow: none;
+  }
+  /* The card carries real media now, so the label thumbnail is a duplicate. */
+  .build__thumb { display: none; }
+
+  .build__dot { width: 0.4rem; height: 0.4rem; margin-top: 0.5rem; }
+  .build__node--primary .build__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    box-shadow: none;
+  }
+
+  .build__project { font-size: 1.0625rem; }
+  .build__node--primary .build__project { font-size: 1.3rem; }
+
   .build__stack,
   .build__orbit { max-width: none; }
 
-  /* Nothing is hidden behind a hover here, so the lead work has to hold its
-     hierarchy on type and image alone. */
-  .build__node--primary .build__project { font-size: 1.25rem; }
-  .build__project { font-size: 1rem; }
+  .build__facts { padding: 0 0.95rem 1rem; }
+  .build__chips { gap: 0.3rem; }
 
-  .build__detail {
-    position: static;
-    width: auto;
-    border: 0;
-    box-shadow: none;
-    background: none;
-    padding: 0 0.25rem 0.9rem;
-    /* Expanded inline rather than floated over the map. */
-    display: none;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
+  /* --- Engineering --------------------------------------------------------
+     The card itself changes, not only its text: the clip gives up height to
+     the spec, the ground sinks, and a drawn inner frame puts the whole card
+     behind glass. */
+
+  [data-mode="engineering"] .build__node { background: var(--paper-sunk); }
+  [data-mode="engineering"] .build__media {
+    height: 9.5rem;
+    border-bottom-style: dashed;
   }
-  .build__node.is-active .build__detail { display: block; }
+  [data-mode="engineering"] .build__video { height: 8.8rem; }
+  [data-mode="engineering"] .build__node::after {
+    content: "";
+    position: absolute;
+    inset: 0.4rem;
+    border: 1px solid var(--rule);
+    border-radius: 0.55rem;
+    opacity: 0.55;
+    pointer-events: none;
+  }
 
-  .build__phone { margin-inline: 0; }
-  .build__video { height: 11rem; }
-  .build__window { max-width: 20rem; }
+  /* --- track position ----------------------------------------------------- */
 
-  .build__cue { display: none; }
+  .build__ticks {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 1.25rem;
+  }
+  .build__tick {
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--rule-strong);
+    transition: width var(--b-base) var(--b-ease-out),
+                background var(--b-base) var(--b-ease);
+  }
+  .build__tick.is-on { width: 1.4rem; background: var(--accent); }
+
+  /* --- cue ---------------------------------------------------------------- */
+
+  /* Kept on the phone: with the track in the way, the route down to the
+     readable list is worth naming. */
+  .build__cue {
+    position: static;
+    display: flex;
+    justify-content: center;
+    transform: none;
+    margin-top: 1.4rem;
+  }
+  .build__cue-rule { display: none; }
+  [data-build].has-active .build__cue { opacity: 1; }
+}
+
+/* Reduced motion: the track keeps working, it just stops moving on its own.
+   Focus is still expressed, by weight rather than by scale. */
+@media (max-width: 60rem) and (prefers-reduced-motion: reduce) {
+  .build__nodes { scroll-behavior: auto; }
+  .build__tick { transition: none; }
 }
 
 /* Short laptop viewports. The vertical budget is reclaimed from the supporting

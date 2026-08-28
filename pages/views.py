@@ -47,7 +47,10 @@ LANDINGS = {
         "work": "pages/partials/work_index.html",
     },
 }
-DEFAULT_LANDING = "legacy"
+# The fallback for a missing or unrecognised setting. Kept in step with the
+# default in settings, so a typo in JOE_LANDING serves the same page an unset
+# one does rather than quietly reverting to the old landing.
+DEFAULT_LANDING = "build"
 
 
 def _landing():

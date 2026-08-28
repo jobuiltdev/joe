@@ -51,6 +51,20 @@ STACK_LAYERS = {"client", "backend", "data", "infra", "integration"}
 
 SHARED_KEYS = ("slug", "name", "kind", "year", "role", "status")
 
+# The Build Space is the default landing now, so the legacy hero and its pinned
+# deck are the ones that have to be asked for. Tests about that page select it
+# explicitly, the same way Build Space tests used to.
+LEGACY = override_settings(LANDING="legacy")
+
+def css_rule(css, selector):
+    """The declaration block for `selector`, without its braces.
+
+    A declaration block has no nested braces, so the first closing brace after
+    the opening one ends it.
+    """
+    start = css.index(selector + " {") + len(selector) + 2
+    return css[start:css.index("}", start)]
+
 
 # A stand-in for the renderer's absent-engineering branch.
 #
@@ -211,20 +225,25 @@ class RenderMixin:
     def html(self, path="/"):
         return self.get(path).content.decode()
 
+    def html_legacy(self, path="/"):
+        """The legacy landing, which is opt-in now that Build Space leads."""
+        with LEGACY:
+            return self.html(path)
+
 
 class HomePageTests(RenderMixin, SimpleTestCase):
     def test_page_renders(self):
         self.assertEqual(self.get("/").status_code, 200)
 
     def test_every_project_reaches_the_page(self):
-        html = self.html()
+        html = self.html_legacy()
         for p in content.PROJECTS:
             with self.subTest(project=p["slug"]):
                 self.assertIn(f'id="project-{p["slug"]}"', html)
                 self.assertIn(p["name"], html)
 
     def test_deck_count_matches_the_data(self):
-        html = self.html()
+        html = self.html_legacy()
         self.assertEqual(html.count("data-deck-panel"), len(content.PROJECTS))
 
     def test_legacy_paths_still_redirect(self):
@@ -254,7 +273,7 @@ class HomePageTests(RenderMixin, SimpleTestCase):
 
     def test_deck_hooks_survive_the_shared_media_partial(self):
         """The panel media moved into a partial; the deck's hooks must remain."""
-        html = self.html()
+        html = self.html_legacy()
         videos = sum(1 for p in content.PROJECTS if p.get("video"))
         self.assertEqual(html.count("data-deck-video"), videos)
         self.assertEqual(html.count("data-deck-play"), videos)
@@ -373,7 +392,8 @@ class PartialProjectTests(RenderMixin, SimpleTestCase):
     }
 
     def _render_with(self, projects):
-        with patch.object(content, "PROJECTS", projects):
+        # Deck panels, so the legacy landing.
+        with LEGACY, patch.object(content, "PROJECTS", projects):
             return self.get("/")
 
     @staticmethod
@@ -523,7 +543,7 @@ class ModeContentTests(RenderMixin, SimpleTestCase):
         self.assertEqual(html.count("panel__link--repo"), 1)
 
     def test_deck_panels_carry_both_lenses(self):
-        html = self.html("/")
+        html = self.html_legacy("/")
         self.assertEqual(html.count('data-lens="experience"'), len(content.PROJECTS))
         self.assertEqual(html.count('data-lens="engineering"'), len(content.PROJECTS))
 
@@ -531,7 +551,7 @@ class ModeContentTests(RenderMixin, SimpleTestCase):
         """Panel count drives the deck's height maths; mode must not alter it."""
         videos = sum(1 for p in content.PROJECTS if p.get("video"))
         for query in ("", "?mode=engineering"):
-            html = self.html("/" + query)
+            html = self.html_legacy("/" + query)
             with self.subTest(query=query):
                 self.assertEqual(html.count("data-deck-panel"), len(content.PROJECTS))
                 self.assertEqual(html.count("data-deck-video"), videos)
@@ -1004,17 +1024,20 @@ class LandingSeamTests(RenderMixin, SimpleTestCase):
     """A deploy-time seam, so a new landing never means a second home page."""
 
     def test_the_current_landing_is_the_default(self):
-        self.assertEqual(views._landing(), views.LANDINGS["legacy"])
+        self.assertEqual(views._landing(), views.LANDINGS["build"])
 
     def test_legacy_landing_renders_the_hero_and_owns_the_intro(self):
-        html = self.html("/")
+        html = self.html_legacy("/")
         self.assertIn('class="hero"', html)
         self.assertIn('id="preloader"', html)
 
     def test_an_unknown_landing_falls_back_instead_of_blanking_the_page(self):
-        with override_settings(LANDING="build-space-that-does-not-exist-yet"):
+        """And falls back to the default, not to whatever used to be default:
+        a typo in JOE_LANDING should serve the page an unset one does."""
+        with override_settings(LANDING="landing-that-does-not-exist"):
             html = self.html("/")
-        self.assertIn('class="hero"', html)
+        self.assertIn("data-build", html)
+        self.assertNotIn('class="hero"', html)
 
     def test_the_seam_carries_the_intro_flag_with_the_landing(self):
         """A landing without a hero must not leave the preloader up."""
@@ -1027,8 +1050,9 @@ class LandingSeamTests(RenderMixin, SimpleTestCase):
 
     def test_the_seam_is_not_reachable_from_a_url(self):
         """Configuration, not a user-facing toggle."""
-        html = self.html("/?landing=build-space")
-        self.assertIn('class="hero"', html)
+        html = self.html("/?landing=legacy")
+        self.assertIn("data-build", html)
+        self.assertNotIn('class="hero"', html)
 
 
 class MotionSchedulerTests(SimpleTestCase):
@@ -1332,10 +1356,15 @@ BUILD = override_settings(LANDING="build")
 class BuildSpaceLandingTests(RenderMixin, SimpleTestCase):
     """The seam, and the guarantee that legacy is still there behind it."""
 
-    def test_legacy_is_still_the_default(self):
-        """The known-good landing stays in front until this one is signed off."""
-        self.assertEqual(views._landing(), views.LANDINGS["legacy"])
+    def test_build_space_is_the_default(self):
+        self.assertEqual(views._landing(), views.LANDINGS["build"])
         html = self.html("/")
+        self.assertIn("data-build", html)
+        self.assertEqual(html.count("data-node-link"), len(content.PROJECTS))
+
+    def test_legacy_is_still_reachable_through_the_seam(self):
+        """Signed off, but not deleted: JOE_LANDING=legacy brings it back."""
+        html = self.html_legacy("/")
         self.assertIn('class="hero"', html)
         self.assertNotIn("data-node-link", html)
 
@@ -1359,7 +1388,7 @@ class BuildSpaceLandingTests(RenderMixin, SimpleTestCase):
         self.assertIn("wantsIntro = false", html)
 
     def test_legacy_landing_pays_nothing_for_the_build_space(self):
-        html = self.html("/")
+        html = self.html_legacy("/")
         self.assertNotIn("css/build.", html)
         self.assertNotIn("js/build.", html)
 
@@ -1371,7 +1400,7 @@ class BuildSpaceLandingTests(RenderMixin, SimpleTestCase):
 
     def test_the_seam_is_not_reachable_from_a_url(self):
         """Deploy configuration, not a public toggle."""
-        html = self.html("/?landing=build")
+        html = self.html_legacy("/?landing=build")
         self.assertIn('class="hero"', html)
         self.assertNotIn("data-node-link", html)
 
@@ -1709,7 +1738,7 @@ class BuildSpaceCoexistenceTests(RenderMixin, SimpleTestCase):
 
     def test_the_deck_partial_is_kept_and_still_works_on_legacy(self):
         """Switched off, not deleted: the legacy landing is unchanged."""
-        html = self.html("/")
+        html = self.html_legacy("/")
         self.assertEqual(html.count("data-deck-panel"), len(content.PROJECTS))
         self.assertIn('id="work"', html)
         self.assertNotIn('class="index"', html)
@@ -1918,7 +1947,9 @@ class BuildSpacePanelPlacementTests(SimpleTestCase):
     def test_the_clamp_survives_reduced_motion(self):
         """Dropping the entrance offset must not drop the correction with it."""
         css = self.css()
-        reduced = css.split("prefers-reduced-motion: reduce")[1]
+        # The exact string, so this anchors on the desktop block rather than
+        # the mobile one, whose condition reads "... and (prefers-...)".
+        reduced = css.split("@media (prefers-reduced-motion: reduce)")[1]
         rule = reduced[reduced.index(".build__detail"):]
         rule = rule[:rule.index("}")]
         self.assertIn("--shift-x", rule)
@@ -2076,14 +2107,14 @@ class LandingIsolationTests(RenderMixin, SimpleTestCase):
     """Switching the landing must not reach the legacy page."""
 
     def test_legacy_still_has_hero_deck_and_full_nav(self):
-        html = self.html("/")
+        html = self.html_legacy("/")
         self.assertIn('class="hero"', html)
         self.assertIn('id="work"', html)
         self.assertIn('href="/#work"', html)
         self.assertEqual(html.count("data-deck-panel"), len(content.PROJECTS))
 
     def test_legacy_never_renders_build_space_markup(self):
-        html = self.html("/")
+        html = self.html_legacy("/")
         for marker in ("data-build", "build__node", "build__grid"):
             with self.subTest(marker=marker):
                 self.assertNotIn(marker, html)
@@ -2163,7 +2194,9 @@ class BuildSpaceStackingTests(SimpleTestCase):
         """A node's transform is its centring; only `translate` is its drift.
         Clearing the transform moved every node by half its own box."""
         css = self.css()
-        reduced = css.split("prefers-reduced-motion: reduce")[1]
+        # The exact string, so this anchors on the desktop block rather than
+        # the mobile one, whose condition reads "... and (prefers-...)".
+        reduced = css.split("@media (prefers-reduced-motion: reduce)")[1]
         rule = reduced.split(".build__node {")[1].split("}")[0]
         self.assertIn("translate: none", rule)
         self.assertNotIn("transform: none", rule)
@@ -2338,3 +2371,162 @@ class WorkIndexMediaContractTests(RenderMixin, SimpleTestCase):
             with self.subTest(video=video[:60]):
                 self.assertIn('preload="none"', video)
                 self.assertNotIn("controls", video)
+
+
+class BuildSpaceTrackTests(SimpleTestCase):
+    """The phone layout is a swipeable track, not a shrunken constellation."""
+
+    @staticmethod
+    def css():
+        with open(CSS_DIR / "build.css", encoding="utf-8") as handle:
+            return handle.read()
+
+    @staticmethod
+    def js():
+        with open(JS_DIR / "build.js", encoding="utf-8") as handle:
+            return handle.read()
+
+    def mobile_block(self):
+        css = self.css()
+        start = css.index("@media (max-width: 60rem)")
+        return css[start:css.index("\n}", css.index(".build__cue-rule", start))]
+
+    def test_the_track_snaps_natively(self):
+        """The gesture belongs to the browser; the script only reads it."""
+        block = self.mobile_block()
+        self.assertIn("scroll-snap-type: x mandatory", block)
+        # Start, not centre: a card rests against the gutter with the next one
+        # showing past it, so the strip's position reads at a glance.
+        self.assertIn("scroll-snap-align: start", block)
+        self.assertIn("scroll-padding-inline: var(--gutter)", block)
+        self.assertIn("overflow-x: auto", block)
+
+    def test_a_swipe_off_the_end_cannot_become_a_page_gesture(self):
+        self.assertIn("overscroll-behavior-x: contain", self.mobile_block())
+
+    def test_the_peek_is_derived_so_it_is_identical_on_every_card(self):
+        block = self.mobile_block()
+        self.assertIn("--card: calc(100vw - var(--gutter) - var(--gap) - var(--peek))", block)
+        # Trailing padding is exactly gap + peek, which is what lets the last
+        # card rest against the same gutter as the first.
+        self.assertIn("padding-inline: var(--gutter) calc(var(--gap) + var(--peek))", block)
+        self.assertIn("opacity: 0.55", block)
+
+    def test_every_card_is_the_same_width(self):
+        """A strip whose cards differ in width slides against itself and reads
+        as scattered rather than as one moving piece."""
+        self.assertIn(".build__node--secondary { flex-basis: var(--card); }",
+                      self.mobile_block())
+
+    def test_no_per_card_scaling(self):
+        """Focus changes weight, not geometry, so the track moves as one."""
+        block = self.mobile_block()
+        self.assertNotIn("transform: scale", block)
+
+    def test_the_card_orders_media_name_facts(self):
+        block = self.mobile_block()
+        # display:contents lets the wrapper's children order themselves.
+        self.assertIn("display: contents", block)
+        for part, order in (("media", "1"), ("hit", "2"), ("facts", "3")):
+            with self.subTest(part=part):
+                self.assertRegex(block, rf"\.build__{part}\s*{{ order: {order}; }}")
+
+    def test_engineering_changes_the_card_not_only_its_text(self):
+        block = self.mobile_block()
+        eng = block[block.index('[data-mode="engineering"]'):]
+        self.assertIn("background: var(--paper-sunk)", eng)
+        self.assertIn("border-bottom-style: dashed", eng)
+
+    def test_the_breakpoint_is_defined_once(self):
+        """The script reads the layout the stylesheet produced rather than
+        repeating its breakpoint, so the two cannot drift apart."""
+        script = self.js()
+        self.assertIn("getComputedStyle(nodeLayer).overflowX === 'auto'", script)
+        self.assertNotIn("60rem", script)
+
+    def test_the_track_has_a_position_indicator(self):
+        self.assertIn(".build__tick.is-on", self.mobile_block())
+        self.assertIn("markTick", self.js())
+
+    def test_a_neighbour_tap_focuses_and_the_focused_tap_navigates(self):
+        script = self.js()
+        block = script[script.index("if (onTrack() && active !== node)"):]
+        self.assertIn("preventDefault", block[:400])
+        self.assertIn("inline: 'center'", block[:400])
+
+    def test_a_clip_interrupted_by_a_swipe_is_not_marked_blocked(self):
+        """Moving on pauses the clip, which rejects its own play promise."""
+        script = self.js()
+        self.assertIn("if (active === node) node.setAttribute('data-clip', 'blocked')", script)
+
+    def test_reduced_motion_keeps_the_track_usable(self):
+        css = self.css()
+        block = css[css.index("@media (max-width: 60rem) and (prefers-reduced-motion: reduce)"):]
+        self.assertIn("transform: none", block)
+
+
+class BuildSpaceTrackMarkupTests(RenderMixin, SimpleTestCase):
+    def stage(self):
+        with BUILD:
+            html = self.html("/")
+        start = html.index('<section class="build"')
+        return html[start:html.index("</section>", start)]
+
+    def test_one_tick_per_project(self):
+        stage = self.stage()
+        self.assertEqual(stage.count("data-tick="), len(content.PROJECTS))
+
+    def test_the_indicator_is_decorative_not_a_second_list(self):
+        """The track is the list a screen reader walks."""
+        stage = self.stage()
+        ticks = stage[stage.index('class="build__ticks"'):]
+        ticks = ticks[:ticks.index("</div>")]
+        self.assertIn('aria-hidden="true"', stage[stage.index("build__ticks") - 120:])
+        self.assertNotIn("<a", ticks)
+
+    def test_the_cards_are_still_the_same_real_links(self):
+        stage = self.stage()
+        self.assertEqual(stage.count("data-node-link"), len(content.PROJECTS))
+
+
+class BuildSpaceTrackOffsetTests(SimpleTestCase):
+    """The strip must not inherit the constellation's coordinates.
+
+    Nodes carry left/top from --nx/--ny for the plotted layout. `static`
+    ignores them; `relative` turns them into offsets from the flow position,
+    which displaced every card by its desktop x-coordinate and made the track
+    look scattered rather than stepped.
+    """
+
+    def test_the_card_clears_the_plotted_coordinates(self):
+        with open(CSS_DIR / "build.css", encoding="utf-8") as handle:
+            css = handle.read()
+        block = css[css.index("@media (max-width: 60rem)"):]
+        card = block[block.index(".build__node {"):]
+        card = card[:card.index("\n  }")]
+        self.assertIn("position: relative", card)
+        # left/top become relative offsets...
+        self.assertIn("inset: auto", card)
+        # ...and the centring transform lifts the card above the section,
+        # where overflow:hidden clips it out of reach.
+        self.assertIn("transform: none", card)
+
+    def mobile_build_rule(self, declarations_only=False):
+        with open(CSS_DIR / "build.css", encoding="utf-8") as handle:
+            css = handle.read()
+        rule = css_rule(css[css.index("@media (max-width: 60rem)"):], ".build")
+        # The prose explains why 100vh is not used, which a naive substring
+        # search reads as a use of it.
+        return re.sub(r"/\*.*?\*/", "", rule, flags=re.S) if declarations_only else rule
+
+    def test_the_hero_uses_safe_area_insets(self):
+        build = self.mobile_build_rule()
+        self.assertIn("env(safe-area-inset-top, 0px)", build)
+        self.assertIn("env(safe-area-inset-bottom, 0px)", build)
+
+    def test_the_hero_grows_rather_than_clipping(self):
+        """No viewport unit: 100vh on iOS reserves space the URL bar is using,
+        and the hero is as tall as its content anyway."""
+        build = self.mobile_build_rule(declarations_only=True)
+        self.assertIn("min-height: 0", build)
+        self.assertNotIn("100vh", build)

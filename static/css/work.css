@@ -594,3 +594,54 @@
     transform: none;
   }
 }
+
+/* Work index on a phone ----------------------------------------------------
+   The hero above is the interactive layer; this stays the readable one. What
+   it must not become is a column of text blocks with a picture on top, so the
+   media keeps a real aspect ratio and the type keeps a real hierarchy.
+   ========================================================================== */
+
+@media (max-width: 52rem) {
+  .index { padding: calc(var(--section) * 0.7) 0 var(--section); }
+
+  .index__head { margin-bottom: 2.5rem; }
+
+  .index__list { gap: 3.25rem; }
+
+  .entry { gap: 1.1rem; }
+
+  /* Full-bleed out of the gutter. A screenshot inset on both sides at this
+     width is a stamp; edge to edge it is an image. */
+  .entry__media {
+    margin-inline: calc(var(--gutter) * -1);
+  }
+
+  /* One ratio for every project, so the column has a beat rather than
+     lurching between portrait clips and landscape screenshots. */
+  .entry__media .panel__shot,
+  .entry__media .panel__plate {
+    border-inline: 0;
+    border-radius: 0;
+  }
+  .entry__media .panel__shot img {
+    max-height: none;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: top center;
+  }
+
+  /* Phone clips stay phone-shaped, centred on their own ground rather than
+     stretched into the same box as a screenshot. */
+  .entry__media .panel__phone {
+    margin-inline: auto;
+    width: fit-content;
+  }
+  .entry__media .panel__video { height: min(62vw, 20rem); }
+  .entry__media .panel__phone-cap { text-align: center; }
+
+  .entry__body { padding-inline: 0; }
+  .entry__meta { gap: 0.3rem 0.85rem; margin-bottom: 0.5rem; }
+  .entry__name { font-size: clamp(1.5rem, 1.1rem + 2.4vw, 2rem); }
+  .entry__kind { margin: 0.15rem 0 0.7rem; }
+  .entry__summary { margin-bottom: 0.85rem; }
+}

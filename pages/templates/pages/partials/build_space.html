@@ -208,6 +208,18 @@ tap targets pretending to be a design.
   </ul>
 
   {% comment %}
+  Track position, shown only on the phone layout where the nodes become a
+  swipeable track and there is no constellation to read position from.
+  Decorative: the track itself is a list of real links and is what a screen
+  reader walks, so this must not be a second copy of that list.
+  {% endcomment %}
+  <div class="build__ticks" aria-hidden="true" data-build-ticks>
+    {% for node in build_nodes %}
+      <span class="build__tick build__tick--{{ node.tier }}" data-tick="{{ node.slug }}"></span>
+    {% endfor %}
+  </div>
+
+  {% comment %}
   The cue names its destination instead of describing the page. "More below"
   told a reader something they could already see; this tells them what is
   down there and how much of it, and goes straight to the section rather than
