@@ -1,6 +1,10 @@
-/* Preloader → IDE typing intro.
-   One file because they're a single choreographed handoff: the hero starts
-   revealing as the preloader wipes away, not after it.
+/* Preloader, and the IDE typing intro it hands off to.
+   One file because on the hero they're a single choreographed handoff: the
+   hero starts revealing as the preloader wipes away, not after it.
+
+   The preloader belongs to the page; the typing belongs to the hero. A landing
+   without a hero still gets the loading layer — it simply has nothing to hand
+   off to, and dismisses itself when loading settles.
 
    The "should this play at all" decision was already made pre-paint by the
    blocking script in base.html, which sets html.intro-pending. Deciding it
@@ -17,7 +21,10 @@
   var fill = document.getElementById('pre-fill');
   var count = document.getElementById('pre-count');
 
-  if (!hero || !out) return;
+  // The loading layer is the thing this file cannot do without. The hero and
+  // its code card are optional, and everything below checks for them.
+  if (!pre) return;
+  var hasIntro = !!(hero && out);
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -79,13 +86,14 @@
     if (finished) return;
     finished = true;
     window.clearTimeout(timer);
+    if (!hasIntro) return;
     renderFull();
     if (card) { card.classList.remove('is-typing'); card.classList.add('is-done'); }
     if (ac) ac.classList.remove('is-on');
   }
 
   function type() {
-    if (finished) return;
+    if (finished || !hasIntro) return;
     if (card) card.classList.add('is-typing');
 
     var i = 0;
@@ -135,6 +143,7 @@
 
   function reveal() {
     root.classList.remove('intro-pending');
+    if (!hero) return;
     void hero.offsetWidth;            // flush, so the transition runs
     hero.classList.add('is-revealing');
   }
@@ -277,9 +286,9 @@
 
   if (!root.classList.contains('intro-pending')) {
     // Already seen this session, or reduced motion: resting state, no motion.
-    hero.classList.add('is-revealing');
+    if (hero) hero.classList.add('is-revealing');
     finish();
-    if (pre) pre.style.display = 'none';
+    pre.style.display = 'none';
     return;
   }
 
@@ -289,7 +298,7 @@
 
   runPreloader(function () {
     reveal();
-    window.setTimeout(type, 520);
+    if (hasIntro) window.setTimeout(type, 520);
     window.setTimeout(detachSkip, 400);
   });
 })();

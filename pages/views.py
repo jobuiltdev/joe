@@ -24,9 +24,11 @@ DEFAULT_MODE = "experience"
 # The landing registry. One entry today; a replacement landing adds a second
 # and settings.LANDING selects it, so the home page never has to fork.
 #
-# "intro" says whether that landing owns the preloader-into-typing sequence.
-# The current hero does; anything replacing it almost certainly will not, and
-# leaving the preloader on with nothing to dismiss it would hang the page.
+# "intro" says whether that landing shows the loading layer. The preloader
+# belongs to the page, not to any one landing; the typing sequence that follows
+# it belongs to the hero, and intro.js only runs that half where there is a
+# hero to run it on. A landing can therefore opt out of the loading layer
+# without that meaning anything about what comes after it.
 #
 # "work" is the template for the work section below the landing. Both
 # landings have one; they present it differently. The legacy hero introduces
@@ -39,11 +41,9 @@ LANDINGS = {
         "intro": True,
         "work": "pages/partials/work.html",
     },
-    # The Build Space brings its own readiness behaviour, so it does not want
-    # the preloader that hands off to the legacy hero's typing sequence.
     "build": {
         "template": "pages/partials/build_space.html",
-        "intro": False,
+        "intro": True,
         "work": "pages/partials/work_index.html",
     },
 }

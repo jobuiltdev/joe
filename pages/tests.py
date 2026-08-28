@@ -1380,12 +1380,20 @@ class BuildSpaceLandingTests(RenderMixin, SimpleTestCase):
         self.assertNotIn('class="hero"', html)
         self.assertNotIn('id="code-card"', html)
 
-    def test_build_space_does_not_inherit_the_legacy_preloader(self):
-        """intro.js returns early without a hero, so nothing would dismiss it."""
+    def test_build_space_gets_the_preloader_too(self):
+        """The loading layer belongs to the page, not to the hero."""
         with BUILD:
             html = self.html("/")
-        self.assertNotIn('id="preloader"', html)
-        self.assertIn("wantsIntro = false", html)
+        self.assertIn('id="preloader"', html)
+        self.assertIn("wantsIntro = true", html)
+
+    def test_the_build_space_has_nothing_for_the_intro_to_hand_off_to(self):
+        """Which is why intro.js must dismiss the preloader on its own rather
+        than waiting on a hero to reveal."""
+        with BUILD:
+            html = self.html("/")
+        self.assertNotIn('id="code-card"', html)
+        self.assertNotIn('id="code-out"', html)
 
     def test_legacy_landing_pays_nothing_for_the_build_space(self):
         html = self.html_legacy("/")
@@ -2530,3 +2538,51 @@ class BuildSpaceTrackOffsetTests(SimpleTestCase):
         build = self.mobile_build_rule(declarations_only=True)
         self.assertIn("min-height: 0", build)
         self.assertNotIn("100vh", build)
+
+
+class PreloaderIndependenceTests(SimpleTestCase):
+    """The preloader must not depend on the hero to dismiss itself.
+
+    It used to bail out entirely without one, which is why the Build Space
+    shipped without a loading layer: turning it on would have left a
+    full-viewport overlay with nothing to take it away.
+    """
+
+    @staticmethod
+    def js():
+        with open(JS_DIR / "intro.js", encoding="utf-8") as handle:
+            return handle.read()
+
+    def test_only_the_loading_layer_is_required(self):
+        script = self.js()
+        self.assertIn("if (!pre) return;", script)
+        self.assertNotIn("if (!hero || !out) return;", script)
+
+    def test_the_typing_half_is_gated_on_having_a_hero(self):
+        script = self.js()
+        self.assertIn("var hasIntro = !!(hero && out);", script)
+        self.assertIn("if (finished || !hasIntro) return;", script)
+
+    def test_reveal_survives_a_landing_with_no_hero(self):
+        """It still clears intro-pending, which is what shows the page."""
+        script = self.js()
+        reveal = script[script.index("function reveal()"):]
+        reveal = reveal[:reveal.index("\n  }")]
+        self.assertIn("root.classList.remove('intro-pending')", reveal)
+        self.assertIn("if (!hero) return;", reveal)
+        # The class must come off before the guard, or a heroless landing
+        # would stay hidden behind the preloader's own styling.
+        self.assertLess(reveal.index("intro-pending"), reveal.index("if (!hero)"))
+
+    def test_nothing_on_a_heroless_page_is_hidden_while_pending(self):
+        """Every intro-pending rule that hides something is scoped to .hero."""
+        with open(CSS_DIR / "intro.css", encoding="utf-8") as handle:
+            css = re.sub(r"/\*.*?\*/", "", handle.read(), flags=re.S)
+        for line in css.splitlines():
+            if "intro-pending" not in line:
+                continue
+            with self.subTest(rule=line.strip()[:60]):
+                self.assertTrue(
+                    ".hero" in line or ".pre" in line,
+                    "an unscoped intro-pending rule would hide a heroless landing",
+                )

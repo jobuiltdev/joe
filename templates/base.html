@@ -100,9 +100,10 @@ Deferring either one means a visible flash of the wrong thing.
     var reduced = window.matchMedia
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Only the page that owns the intro may hide itself behind it. intro.js
-    // returns early when there is no hero, so setting this anywhere else
-    // would leave the preloader up with nothing left to dismiss it.
+    // Whether this landing shows the loading layer. It is safe on a landing
+    // with no hero: every intro-pending rule that hides something is scoped to
+    // .hero, and intro.js dismisses the preloader on its own rather than
+    // waiting for a hero to reveal.
     var wantsIntro = {% if show_intro %}true{% else %}false{% endif %};
 
     if (wantsIntro && !seen && !reduced) {
