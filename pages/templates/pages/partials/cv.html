@@ -1,0 +1,52 @@
+{% load static %}
+{% comment %}
+The CV, between the work and the contact form.
+
+Placed there on purpose: someone who has just read the projects is the person
+most likely to want the credentials, and the form is the next thing after it.
+
+Two actions rather than one, because they are genuinely different intents.
+"View" opens the browser's own PDF viewer, which is what someone skimming
+wants. "Download" carries the `download` attribute so the file lands under a
+readable name — the served file is content-hashed, and nobody wants
+`joseph-edward-cv.4f2a91c3.pdf` in their downloads folder.
+
+Both point at the same static asset, so it is cached on the CDN and never
+streams out of the function.
+{% endcomment %}
+
+<section class="cv" id="cv" aria-labelledby="cv-title">
+  <div class="shell cv__inner">
+
+    <div class="cv__text">
+      <span class="section__index mono">{{ cv.label }}</span>
+      <h2 class="section__title" id="cv-title">{{ profile.name }}</h2>
+      <p class="cv__role">{{ profile.role }}</p>
+      <p class="cv__summary">{{ cv.summary }}</p>
+    </div>
+
+    <div class="cv__actions">
+      <a class="btn btn--solid" href="{% static cv.file %}"
+         target="_blank" rel="noopener">
+        View CV
+        <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
+             stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M3.5 10.5L10.5 3.5M5 3.5h5.5V9"/>
+        </svg>
+      </a>
+
+      <a class="btn" href="{% static cv.file %}" download="{{ cv.download_as }}">
+        Download
+        <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
+             stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M7 1.5v8M3.5 6.5L7 10l3.5-3.5M2 12.5h10"/>
+        </svg>
+      </a>
+
+      <p class="cv__meta mono">
+        {% for item in cv.meta %}<span>{{ item }}</span>{% endfor %}
+      </p>
+    </div>
+
+  </div>
+</section>

@@ -18,6 +18,22 @@ PROFILE = {
     "available": "Available for contract work and remote opportunities",
 }
 
+# The CV. `file` is a path under static/, so the PDF is content-hashed and
+# served from the CDN like any other asset rather than streamed out of the
+# function. `download_as` is the name a visitor's browser saves it under: the
+# served file carries a hash in its name, which is right for caching and wrong
+# for something landing in someone's downloads folder.
+CV = {
+    "file": "docs/joseph-edward-cv.pdf",
+    "download_as": "Joseph Edward CV.pdf",
+    "label": "Curriculum vitae",
+    "summary": (
+        "The short version of everything below: where I have worked, what I "
+        "have shipped, and what I build with."
+    ),
+    "meta": ["2 pages", "PDF", "87 KB"],
+}
+
 NAV = [
     {"index": "01", "slug": "about", "label": "About"},
     {"index": "02", "slug": "work", "label": "Work"},

@@ -182,7 +182,24 @@
     // Honour the intent behind a modified click even though these are options
     // rather than anchors.
     var newTab = event && (event.metaKey || event.ctrlKey || event.button === 1);
-    if (newTab || command.external) {
+
+    /* A command that names a download wants the file saved, not opened, and
+       under a readable name rather than the hashed one it is served as. Only
+       an anchor can ask for that, so one is synthesised for the click. A
+       modified click still means "new tab" and is left alone. */
+    if (command.download && !newTab) {
+      var save = document.createElement('a');
+      save.href = url;
+      save.download = command.download;
+      save.rel = 'noopener';
+      document.body.appendChild(save);
+      save.click();
+      document.body.removeChild(save);
+      close();
+      return;
+    }
+
+    if (newTab || command.external || command.blank) {
       window.open(url, '_blank', 'noopener');
       if (!newTab) close();
       return;

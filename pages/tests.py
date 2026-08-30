@@ -2586,3 +2586,104 @@ class PreloaderIndependenceTests(SimpleTestCase):
                     ".hero" in line or ".pre" in line,
                     "an unscoped intro-pending rule would hide a heroless landing",
                 )
+
+
+class CvSectionTests(RenderMixin, SimpleTestCase):
+    """The CV band, and the two different intents it serves."""
+
+    def html_build(self):
+        with BUILD:
+            return self.html("/")
+
+    def band(self):
+        html = self.html_build()
+        start = html.index('<section class="cv"')
+        return html[start:html.index("</section>", start)]
+
+    def test_it_sits_between_the_work_and_the_form(self):
+        html = self.html_build()
+        self.assertLess(html.index('id="work"'), html.index('id="cv"'))
+        self.assertLess(html.index('id="cv"'), html.index('id="contact"'))
+
+    def test_both_landings_carry_it(self):
+        for label, html in (("build", self.html_build()), ("legacy", self.html_legacy("/"))):
+            with self.subTest(landing=label):
+                self.assertIn('id="cv"', html)
+
+    def test_view_opens_in_a_tab_and_download_saves_a_readable_name(self):
+        band = self.band()
+        self.assertIn('target="_blank"', band)
+        self.assertIn('rel="noopener"', band)
+        self.assertIn(f'download="{content.CV["download_as"]}"', band)
+
+    def test_the_saved_name_is_not_the_hashed_one(self):
+        """The file is served content-hashed; nobody wants that in a
+        downloads folder."""
+        self.assertNotIn(".", content.CV["download_as"].replace(".pdf", ""))
+        self.assertTrue(content.CV["download_as"].endswith(".pdf"))
+
+    def test_the_file_resolves_under_manifest_storage(self):
+        """A missing manifest entry raises rather than 404s, so this would
+        take the whole page down."""
+        self.assertTrue(staticfiles_storage.url(content.CV["file"]))
+
+    def test_it_is_served_as_a_static_asset_not_streamed_by_a_view(self):
+        band = self.band()
+        self.assertIn("/static/", band)
+        for url in re.findall(r'href="([^"]+)"', band):
+            with self.subTest(url=url):
+                self.assertTrue(url.startswith("/static/"))
+
+    def test_the_rail_is_unchanged(self):
+        """The CV is an action, not a stop on the numbered walk down the page."""
+        html = self.html_build()
+        rail = html.split('class="rail"')[1].split("</nav>")[0]
+        self.assertNotIn("#cv", rail)
+        # Still exactly the sections NAV declares, and nothing more.
+        self.assertEqual(rail.count("rail__item"), len(content.NAV))
+
+
+class CvPaletteTests(SimpleTestCase):
+    """Typing "resume" has to find it; typing "mobile" must not."""
+
+    def commands(self):
+        return {c["id"]: c for c in views._palette_commands()}
+
+    def test_both_intents_are_offered(self):
+        ids = self.commands()
+        self.assertIn("cv:view", ids)
+        self.assertIn("cv:download", ids)
+
+    def test_it_answers_the_words_people_actually_type(self):
+        cmds = self.commands()
+        for word in ("cv", "resume", "curriculum", "vitae", "pdf"):
+            with self.subTest(word=word):
+                self.assertIn(word, cmds["cv:view"]["terms"])
+
+    def test_it_does_not_pollute_a_search_for_the_work(self):
+        """The role reads 'Full-stack web & mobile engineer'; folding it into
+        these terms would make the CV answer searches that mean projects."""
+        cmds = self.commands()
+        for word in ("mobile", "web"):
+            with self.subTest(word=word):
+                self.assertNotIn(word, cmds["cv:view"]["terms"])
+
+    def test_the_file_is_same_origin_so_it_is_not_flagged_external(self):
+        cmds = self.commands()
+        for ident in ("cv:view", "cv:download"):
+            with self.subTest(command=ident):
+                self.assertFalse(cmds[ident].get("external"))
+                self.assertTrue(cmds[ident]["url"].startswith("/static/"))
+
+    def test_only_the_download_command_asks_to_be_saved(self):
+        cmds = self.commands()
+        self.assertIsNone(cmds["cv:view"]["download"])
+        self.assertEqual(cmds["cv:download"]["download"], content.CV["download_as"])
+        self.assertTrue(cmds["cv:view"]["blank"])
+
+    def test_the_client_can_actually_honour_a_download_command(self):
+        with open(JS_DIR / "palette.js", encoding="utf-8") as handle:
+            script = handle.read()
+        self.assertIn("command.download", script)
+        self.assertIn("save.download = command.download", script)
+        self.assertIn("command.blank", script)

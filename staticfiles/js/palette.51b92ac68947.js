@@ -199,7 +199,7 @@
       return;
     }
 
-    if (newTab || command.external || command.blank) {
+    if (newTab || command.external) {
       window.open(url, '_blank', 'noopener');
       if (!newTab) close();
       return;

@@ -232,6 +232,30 @@ def _palette_commands():
             "terms": _search_terms(mode, "mode lens switch view toggle"),
         })
 
+    # The CV, as two commands rather than one: viewing it and saving it are
+    # different intents, and the palette is where someone types "resume"
+    # rather than scrolling to find the band.
+    cv_url = static(content.CV["file"])
+    for verb, ident in (("View", "view"), ("Download", "download")):
+        commands.append({
+            "id": f"cv:{ident}",
+            "group": "Elsewhere",
+            "label": f"{verb} CV",
+            "hint": " · ".join(content.CV["meta"]),
+            "url": cv_url,
+            # Not "external": the file is served from this origin. Viewing it
+            # wants a new tab because it is a PDF, and saving it wants the
+            # readable name; those are different flags, not the same one.
+            "blank": ident == "view",
+            "download": content.CV["download_as"] if ident == "download" else None,
+            # Deliberately not the role: it reads "Full-stack web & mobile
+            # engineer", and folding that in would make the CV answer a search
+            # for "mobile" or "web" alongside the projects those words mean.
+            "terms": _search_terms(
+                verb, "cv resume curriculum vitae pdf", content.PROFILE["name"],
+            ),
+        })
+
     for social in content.SOCIALS:
         commands.append({
             "id": f"social:{social['label'].lower()}",
@@ -454,6 +478,7 @@ def _page_context(request, project=None, **extra):
         "profile": content.PROFILE,
         "nav_items": content.NAV,
         "socials": content.SOCIALS,
+        "cv": content.CV,
         "about": content.ABOUT,
         "about_close": content.ABOUT_CLOSE,
         "help_with": content.HELP_WITH,
