@@ -27,10 +27,7 @@ CV = {
     "file": "docs/joseph-edward-cv.pdf",
     "download_as": "Joseph Edward CV.pdf",
     "label": "Curriculum vitae",
-    "summary": (
-        "The short version of everything below: where I have worked, what I "
-        "have shipped, and what I build with."
-    ),
+    "summary": "You can view or download my CV below.",
     "meta": ["2 pages", "PDF", "87 KB"],
 }
 

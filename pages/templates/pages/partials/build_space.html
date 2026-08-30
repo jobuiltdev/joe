@@ -141,9 +141,18 @@ tap targets pretending to be a design.
           <div class="build__media">
             {% if node.video %}
               <div class="build__phone">
+                {% comment %}
+                metadata, not none. On the phone layout the leading card is
+                active the moment the page settles, so play() was the first
+                thing to touch the network — a cold open on half a megabyte,
+                which reads as "the video does not autoplay" when it is really
+                "the video has not arrived". Fetching the header up front is a
+                few KB per clip and the clips are encoded +faststart, so it is
+                at the front of the file where it is useful.
+                {% endcomment %}
                 <video class="build__video" data-build-video
                        poster="{% static node.video|add:'.jpg' %}"
-                       muted loop playsinline preload="none"
+                       muted loop playsinline preload="metadata"
                        aria-label="{{ node.media_alt }}">
                   <source src="{% static node.video|add:'.mp4' %}" type="video/mp4">
                 </video>

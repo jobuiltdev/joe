@@ -1,58 +1,49 @@
 /* ==========================================================================
-   CV band
+   CV block
 
-   Sits between the work and the contact form, and is the one section on the
-   page with a filled ground. That is deliberate: everything around it is paper
-   with hairlines, so a single change of surface is enough to make this read as
-   a distinct offer without a louder colour or a heavier type size.
+   Lives inside About, between the closing paragraph and the two columns of
+   detail. It is a block within a section, not a section of its own, so it
+   picks up that section's rhythm: the same top margin and hairline the
+   neighbouring blocks use to separate themselves.
 
-   Buttons and the section heading are the shared primitives from
-   foundation.css; nothing is restyled here that already exists.
+   What makes it stand out is a filled ground rather than louder type. The
+   surrounding page is paper and hairlines; one change of surface is enough,
+   and it keeps the heading hierarchy honest — the label matches "What I help
+   with" and "Stack" rather than competing with the section title.
+
+   Buttons come from foundation.css. Nothing already defined is restyled here.
    ========================================================================== */
 
 .cv {
+  margin-top: clamp(3rem, 7vw, 5.5rem);
+  padding: clamp(1.5rem, 4vw, 2.25rem);
   background: var(--paper-sunk);
-  border-block: 1px solid var(--rule);
-  padding-block: clamp(3rem, 7vw, 5.5rem);
-}
+  border: 1px solid var(--rule);
 
-.cv__inner {
   display: grid;
-  gap: clamp(1.75rem, 4vw, 3rem);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
   align-items: center;
 }
 
 @media (min-width: 48rem) {
-  .cv__inner {
-    /* The text leads; the actions sit at the end of the measure rather than
-       floating in the middle of the band. */
+  .cv {
+    /* The copy leads; the actions sit at the end of the measure rather than
+       floating in the middle of the block. */
     grid-template-columns: minmax(0, 1fr) auto;
   }
 }
 
 .cv__text { min-width: 0; }
 
-.cv .section__index {
-  display: block;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.cv .section__title { margin: 0; }
-
-.cv__role {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(1.0625rem, 0.9rem + 0.6vw, 1.375rem);
-  color: var(--ink-soft);
-  margin: 0.4rem 0 0;
-}
+/* The label is .about__label, so it already matches its neighbours; only the
+   spacing changes, because inside a filled block it needs less room than it
+   does at the head of a column. */
+.cv .about__label { margin-bottom: 0.6rem; }
 
 .cv__summary {
   max-width: 46ch;
   color: var(--ink-soft);
-  margin: 0.9rem 0 0;
+  margin: 0;
 }
 
 /* Actions ------------------------------------------------------------------ */
@@ -86,11 +77,11 @@
 
 /* The arrow on "View" leans out the way the case-study links do; the download
    arrow stays put, because it points at the action rather than away from it. */
+.cv__actions .btn svg { transition: transform 0.3s var(--ease); }
 @media (hover: hover) {
   .cv__actions .btn:hover svg { transform: translate(1px, -1px); }
   .cv__actions .btn[download]:hover svg { transform: translateY(1px); }
 }
-.cv__actions .btn svg { transition: transform 0.3s var(--ease); }
 
 @media (max-width: 30rem) {
   .cv__actions .btn { flex: 1 1 100%; }

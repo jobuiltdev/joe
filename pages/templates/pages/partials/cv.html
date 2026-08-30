@@ -1,52 +1,52 @@
 {% load static %}
 {% comment %}
-The CV, between the work and the contact form.
+The CV, inside About, between the prose and the two columns of detail.
 
-Placed there on purpose: someone who has just read the projects is the person
-most likely to want the credentials, and the form is the next thing after it.
+Placed there because it is the same story the paragraphs above tell, in the
+form someone hiring actually files. It is a block within a section rather than
+a section of its own, so it takes a heading level and a label style from its
+neighbours ("What I help with", "Stack") instead of competing with them.
 
-Two actions rather than one, because they are genuinely different intents.
-"View" opens the browser's own PDF viewer, which is what someone skimming
-wants. "Download" carries the `download` attribute so the file lands under a
-readable name — the served file is content-hashed, and nobody wants
-`joseph-edward-cv.4f2a91c3.pdf` in their downloads folder.
+Two actions, and they go to two different places.
 
-Both point at the same static asset, so it is cached on the CDN and never
-streams out of the function.
+"View" points straight at the static file and opens in the same tab, so the
+browser's own PDF viewer takes over and its back button returns to the page.
+No new tab: a visitor reading the site should not have to hunt for the one
+they came from.
+
+"Download" points at a route instead, because the download attribute on a link
+is only advisory — a browser set to open PDFs inline is free to ignore it, and
+Chrome does. The view answers with Content-Disposition, which is not advisory,
+and names the file readably rather than by the hash it is served under.
 {% endcomment %}
 
-<section class="cv" id="cv" aria-labelledby="cv-title">
-  <div class="shell cv__inner">
+<div class="cv" id="cv">
 
-    <div class="cv__text">
-      <span class="section__index mono">{{ cv.label }}</span>
-      <h2 class="section__title" id="cv-title">{{ profile.name }}</h2>
-      <p class="cv__role">{{ profile.role }}</p>
-      <p class="cv__summary">{{ cv.summary }}</p>
-    </div>
-
-    <div class="cv__actions">
-      <a class="btn btn--solid" href="{% static cv.file %}"
-         target="_blank" rel="noopener">
-        View CV
-        <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
-             stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-          <path d="M3.5 10.5L10.5 3.5M5 3.5h5.5V9"/>
-        </svg>
-      </a>
-
-      <a class="btn" href="{% static cv.file %}" download="{{ cv.download_as }}">
-        Download
-        <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
-             stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-          <path d="M7 1.5v8M3.5 6.5L7 10l3.5-3.5M2 12.5h10"/>
-        </svg>
-      </a>
-
-      <p class="cv__meta mono">
-        {% for item in cv.meta %}<span>{{ item }}</span>{% endfor %}
-      </p>
-    </div>
-
+  <div class="cv__text">
+    <h3 class="about__label mono">{{ cv.label }}</h3>
+    <p class="cv__summary">{{ cv.summary }}</p>
   </div>
-</section>
+
+  <div class="cv__actions">
+    <a class="btn btn--solid" href="{% static cv.file %}">
+      View CV
+      <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
+           stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M3.5 10.5L10.5 3.5M5 3.5h5.5V9"/>
+      </svg>
+    </a>
+
+    <a class="btn" href="{% url 'cv_download' %}">
+      Download
+      <svg viewBox="0 0 14 14" width="12" height="12" fill="none"
+           stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M7 1.5v8M3.5 6.5L7 10l3.5-3.5M2 12.5h10"/>
+      </svg>
+    </a>
+
+    <p class="cv__meta mono">
+      {% for item in cv.meta %}<span>{{ item }}</span>{% endfor %}
+    </p>
+  </div>
+
+</div>

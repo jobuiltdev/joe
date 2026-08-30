@@ -4,7 +4,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import Http404
+from django.contrib.staticfiles import finders
+from django.http import FileResponse, Http404
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import reverse
@@ -235,19 +236,19 @@ def _palette_commands():
     # The CV, as two commands rather than one: viewing it and saving it are
     # different intents, and the palette is where someone types "resume"
     # rather than scrolling to find the band.
-    cv_url = static(content.CV["file"])
-    for verb, ident in (("View", "view"), ("Download", "download")):
+    # Viewing goes to the static file; saving goes through the route that
+    # sends Content-Disposition. Neither needs the client to do anything
+    # special — following the URL is the whole behaviour in both cases.
+    for verb, ident, url in (
+        ("View", "view", static(content.CV["file"])),
+        ("Download", "download", reverse("cv_download")),
+    ):
         commands.append({
             "id": f"cv:{ident}",
             "group": "Elsewhere",
             "label": f"{verb} CV",
             "hint": " · ".join(content.CV["meta"]),
-            "url": cv_url,
-            # Not "external": the file is served from this origin. Viewing it
-            # wants a new tab because it is a PDF, and saving it wants the
-            # readable name; those are different flags, not the same one.
-            "blank": ident == "view",
-            "download": content.CV["download_as"] if ident == "download" else None,
+            "url": url,
             # Deliberately not the role: it reads "Full-stack web & mobile
             # engineer", and folding that in would make the CV answer a search
             # for "mobile" or "web" alongside the projects those words mean.
@@ -414,6 +415,30 @@ def _build_space_links(nodes):
         })
 
     return links
+
+
+def cv_download(request):
+    """The CV, forced to save rather than open.
+
+    This view exists for one header. The `download` attribute on a link is
+    advisory: a browser set to open PDFs inline is free to ignore it, and
+    Chrome does. Content-Disposition is not advisory, so the file lands in the
+    downloads folder wherever it is clicked from.
+
+    Viewing the CV does not come through here — that link points straight at
+    the static file, so it stays on the CDN and costs nothing. Only an explicit
+    request to keep a copy reaches the function.
+    """
+    path = finders.find(content.CV["file"])
+    if not path:
+        raise Http404("CV not found")
+
+    return FileResponse(
+        open(path, "rb"),
+        as_attachment=True,
+        filename=content.CV["download_as"],
+        content_type="application/pdf",
+    )
 
 
 def _find_project(slug):

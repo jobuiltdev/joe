@@ -19,6 +19,12 @@
 
     <p class="about__close">{{ about_close }}</p>
 
+    {% comment %}
+    The CV sits between the prose and the columns: it is the same story the
+    paragraphs above tell, offered in the form someone hiring actually files.
+    {% endcomment %}
+    {% include "pages/partials/cv.html" %}
+
     <div class="about__split">
       <div class="about__col">
         <h3 class="about__label mono">What I help with</h3>

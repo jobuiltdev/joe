@@ -1671,16 +1671,21 @@ class BuildSpaceMarkupTests(RenderMixin, SimpleTestCase):
                 elif p.get("image"):
                     self.assertIn(staticfiles_storage.url(p["image"] + ".jpg"), html)
 
-    def test_videos_do_not_preload_or_autoplay_together(self):
-        """Eight previews arriving at once is the payload risk here.
+    def test_videos_fetch_headers_but_never_bodies_or_autoplay_together(self):
+        """Three clips arriving at once is the payload risk here.
 
-        Scoped to the stage: the deck below uses preload="metadata", which is
-        right for it and wrong here, where nothing should be fetched until a
-        project is actually opened.
+        metadata rather than none: on the phone layout the leading card is
+        active as soon as the page settles, and preload="none" made play() a
+        cold open on half a megabyte — which looks like autoplay failing. The
+        header is a few KB and the clips are encoded +faststart.
+
+        What must not appear is the autoplay attribute: which clip runs is
+        build.js's decision, and only ever one of them.
         """
         for tag in re.findall(r"<video[^>]*>", self.stage()):
             with self.subTest(tag=tag[:60]):
-                self.assertIn('preload="none"', tag)
+                self.assertIn('preload="metadata"', tag)
+                self.assertNotIn('preload="auto"', tag)
                 self.assertNotIn("autoplay", tag)
                 self.assertIn("muted", tag)
                 self.assertIn("playsinline", tag)
@@ -2371,14 +2376,15 @@ class WorkIndexMediaContractTests(RenderMixin, SimpleTestCase):
                 self.assertIn('preload="metadata"', video)
                 self.assertNotIn('preload="auto"', video)
 
-    def test_the_hero_still_loads_nothing_until_opened(self):
-        """The Build Space is unchanged by this."""
+    def test_the_hero_keeps_its_own_playback_contract(self):
+        """Driven by build.js, so no native controls — that is what separates
+        it from the index below, where a clip is something you operate."""
         html = self.html_build()
         stage = html[html.index('<section class="build"'):html.index('<ol class="index__list')]
         for video in re.findall(r"<video[^>]*>", stage):
             with self.subTest(video=video[:60]):
-                self.assertIn('preload="none"', video)
                 self.assertNotIn("controls", video)
+                self.assertNotIn("autoplay", video)
 
 
 class BuildSpaceTrackTests(SimpleTestCase):
@@ -2596,25 +2602,44 @@ class CvSectionTests(RenderMixin, SimpleTestCase):
             return self.html("/")
 
     def band(self):
+        """The CV block, bounded by the next block in About."""
         html = self.html_build()
-        start = html.index('<section class="cv"')
-        return html[start:html.index("</section>", start)]
+        start = html.index('<div class="cv" id="cv">')
+        return html[start:html.index("about__split", start)]
 
-    def test_it_sits_between_the_work_and_the_form(self):
+    def test_it_sits_inside_about_after_the_prose(self):
+        """Between the closing paragraph and the two columns of detail."""
         html = self.html_build()
-        self.assertLess(html.index('id="work"'), html.index('id="cv"'))
-        self.assertLess(html.index('id="cv"'), html.index('id="contact"'))
+        about = html[html.index('id="about"'):html.index('id="work"')]
+        self.assertIn('id="cv"', about)
+        self.assertLess(about.index("about__close"), about.index('id="cv"'))
+        self.assertLess(about.index('id="cv"'), about.index("about__split"))
+
+    def test_it_is_not_a_section_of_its_own(self):
+        """A section inside a section would put a second h2 under About's."""
+        band = self.band()
+        self.assertNotIn("<section", band)
+        self.assertNotIn("<h2", band)
+        # Its label matches the blocks beside it.
+        self.assertIn("about__label", band)
 
     def test_both_landings_carry_it(self):
         for label, html in (("build", self.html_build()), ("legacy", self.html_legacy("/"))):
             with self.subTest(landing=label):
                 self.assertIn('id="cv"', html)
 
-    def test_view_opens_in_a_tab_and_download_saves_a_readable_name(self):
+    def test_view_stays_in_the_same_tab(self):
+        """So the browser's back button returns to the page. A new tab leaves
+        a visitor hunting for the one they came from."""
         band = self.band()
-        self.assertIn('target="_blank"', band)
-        self.assertIn('rel="noopener"', band)
-        self.assertIn(f'download="{content.CV["download_as"]}"', band)
+        self.assertNotIn('target="_blank"', band)
+
+    def test_the_two_actions_go_to_different_places(self):
+        """Viewing hits the static file; saving hits the route that can send
+        the header a browser will not ignore."""
+        band = self.band()
+        self.assertIn(staticfiles_storage.url(content.CV["file"]), band)
+        self.assertIn(reverse("cv_download"), band)
 
     def test_the_saved_name_is_not_the_hashed_one(self):
         """The file is served content-hashed; nobody wants that in a
@@ -2627,12 +2652,12 @@ class CvSectionTests(RenderMixin, SimpleTestCase):
         take the whole page down."""
         self.assertTrue(staticfiles_storage.url(content.CV["file"]))
 
-    def test_it_is_served_as_a_static_asset_not_streamed_by_a_view(self):
+    def test_viewing_costs_nothing(self):
+        """Only an explicit save reaches the function; reading it is a static
+        file on the CDN."""
         band = self.band()
-        self.assertIn("/static/", band)
-        for url in re.findall(r'href="([^"]+)"', band):
-            with self.subTest(url=url):
-                self.assertTrue(url.startswith("/static/"))
+        view_href = re.findall(r'href="([^"]+)"', band)[0]
+        self.assertTrue(view_href.startswith("/static/"))
 
     def test_the_rail_is_unchanged(self):
         """The CV is an action, not a stop on the numbered walk down the page."""
@@ -2668,22 +2693,57 @@ class CvPaletteTests(SimpleTestCase):
             with self.subTest(word=word):
                 self.assertNotIn(word, cmds["cv:view"]["terms"])
 
-    def test_the_file_is_same_origin_so_it_is_not_flagged_external(self):
+    def test_neither_command_needs_the_client_to_do_anything_special(self):
+        """Following the URL is the whole behaviour: one renders, one saves,
+        and the difference is a response header rather than palette code."""
         cmds = self.commands()
         for ident in ("cv:view", "cv:download"):
             with self.subTest(command=ident):
                 self.assertFalse(cmds[ident].get("external"))
-                self.assertTrue(cmds[ident]["url"].startswith("/static/"))
+                self.assertFalse(cmds[ident].get("blank"))
+                self.assertFalse(cmds[ident].get("download"))
 
-    def test_only_the_download_command_asks_to_be_saved(self):
+    def test_the_commands_point_where_the_buttons_do(self):
         cmds = self.commands()
-        self.assertIsNone(cmds["cv:view"]["download"])
-        self.assertEqual(cmds["cv:download"]["download"], content.CV["download_as"])
-        self.assertTrue(cmds["cv:view"]["blank"])
+        self.assertTrue(cmds["cv:view"]["url"].startswith("/static/"))
+        self.assertEqual(cmds["cv:download"]["url"], reverse("cv_download"))
 
-    def test_the_client_can_actually_honour_a_download_command(self):
-        with open(JS_DIR / "palette.js", encoding="utf-8") as handle:
-            script = handle.read()
-        self.assertIn("command.download", script)
-        self.assertIn("save.download = command.download", script)
-        self.assertIn("command.blank", script)
+
+class CvDownloadRouteTests(SimpleTestCase):
+    """The route exists for one header.
+
+    A `download` attribute on a link is advisory: a browser configured to open
+    PDFs inline may ignore it, and Chrome does — which is exactly how this was
+    found, with the download button rendering the CV in place instead of
+    saving it. Content-Disposition is not advisory.
+    """
+
+    def get(self):
+        return Client().get(reverse("cv_download"))
+
+    def test_it_answers_with_the_file(self):
+        response = self.get()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_it_tells_the_browser_to_save_rather_than_render(self):
+        disposition = self.get()["Content-Disposition"]
+        self.assertTrue(disposition.startswith("attachment"))
+
+    def test_it_names_the_file_readably(self):
+        """Not the content-hashed name it is served under everywhere else."""
+        disposition = self.get()["Content-Disposition"]
+        self.assertIn(content.CV["download_as"], disposition)
+
+    def test_the_bytes_are_the_real_document(self):
+        source = _ROOT / "static" / content.CV["file"]
+        with open(source, "rb") as handle:
+            expected = handle.read()
+        served = b"".join(self.get().streaming_content)
+        self.assertEqual(served, expected)
+        self.assertTrue(served.startswith(b"%PDF"))
+
+    def test_a_missing_file_is_a_404_not_a_500(self):
+        with patch.object(views, "content") as stub:
+            stub.CV = dict(content.CV, file="docs/not-here.pdf")
+            self.assertEqual(self.get().status_code, 404)
