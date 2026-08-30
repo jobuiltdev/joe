@@ -25,7 +25,7 @@ NAV = [
 ]
 
 SOCIALS = [
-    {"label": "GitHub", "short": "GH", "url": "https://github.com/zazajo"},
+    {"label": "GitHub", "short": "GH", "url": "https://github.com/jobuiltdev"},
     {
         "label": "LinkedIn",
         "short": "LI",
@@ -263,7 +263,7 @@ PROJECTS = [
         "video": "video/spendwise-demo",
         "media_alt": "Screen recording of the SpendWise finance app",
         "links": [],
-        "repos": [{"label": "Source", "url": "https://github.com/zazajo/spendwise"}],
+        "repos": [{"label": "Source", "url": "https://github.com/jobuiltdev/spendwise"}],
         "experience": {
             "summary": (
                 "Expense tracking and budgeting as a Django REST API with an Expo "
@@ -483,7 +483,7 @@ PROJECTS = [
         "media_alt": "The Vaultor prediction market platform",
         # The apex redirects to www, so link www directly and skip the hop.
         "links": [{"label": "Visit site", "url": "https://www.vaultor.org"}],
-        "repos": [{"label": "Source", "url": "https://github.com/zazajo/vaultor"}],
+        "repos": [{"label": "Source", "url": "https://github.com/jobuiltdev/vaultor"}],
         "experience": {
             "summary": (
                 "The Genesis presale platform for a perception-first prediction "
@@ -594,7 +594,7 @@ PROJECTS = [
         "image": "images/marketbrainers",
         "media_alt": "The MarketBrainers marketing agency website",
         "links": [{"label": "Visit site", "url": "https://www.marketbrainer.org"}],
-        "repos": [{"label": "Source", "url": "https://github.com/zazajo/marketbrainers"}],
+        "repos": [{"label": "Source", "url": "https://github.com/jobuiltdev/marketbrainers"}],
         "experience": {
             "summary": (
                 "The public face of a marketing agency: services, packages, "
@@ -609,7 +609,7 @@ PROJECTS = [
                 "Direct contact page with a one-tap email CTA",
             ],
         },
-        # Verified against github.com/zazajo/marketbrainers. Everything below is
+        # Verified against github.com/jobuiltdev/marketbrainers. Everything below is
         # read from requirements.txt, mb_site/settings.py, vercel.json, the core
         # app and the templates; nothing is taken from the repository README,
         # which claims PostgreSQL the settings do not use.
@@ -699,7 +699,7 @@ PROJECTS = [
         "links": [
             {"label": "Visit site", "url": "https://admin-dashboard-main-nu.vercel.app"}
         ],
-        "repos": [{"label": "Source", "url": "https://github.com/zazajo/admin-dashboard"}],
+        "repos": [{"label": "Source", "url": "https://github.com/jobuiltdev/admin-dashboard"}],
         "experience": {
             "summary": (
                 "An administrative dashboard for teams that need to see who did "
@@ -832,8 +832,8 @@ PROJECTS = [
             {"label": "Next.js build", "url": "https://crownie-landing-gilt.vercel.app/"},
         ],
         "repos": [
-            {"label": "Django source", "url": "https://github.com/zazajo/crw-landing"},
-            {"label": "Next.js source", "url": "https://github.com/zazajo/crownie-landing"},
+            {"label": "Django source", "url": "https://github.com/jobuiltdev/crw-landing"},
+            {"label": "Next.js source", "url": "https://github.com/jobuiltdev/crownie-landing"},
         ],
         "experience": {
             "summary": (
@@ -912,7 +912,7 @@ PROJECTS = [
         "image": "images/spooky",
         "media_alt": "The Spooky’s Y2K Rave ticket tiers with prices and remaining stock",
         "links": [{"label": "Visit site", "url": "https://pancakejo.pythonanywhere.com"}],
-        "repos": [{"label": "Source", "url": "https://github.com/zazajo/spooky"}],
+        "repos": [{"label": "Source", "url": "https://github.com/jobuiltdev/spooky"}],
         "experience": {
             "summary": (
                 "Ticketing for a live rave, built to take real money on the night. "

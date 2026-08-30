@@ -268,5 +268,5 @@ caching and pushes against the function response size limit.
 
 ## Contact
 
-josephedward201@gmail.com · [github.com/zazajo](https://github.com/zazajo) ·
+josephedward201@gmail.com · [github.com/jobuiltdev](https://github.com/jobuiltdev) ·
 [linkedin](https://www.linkedin.com/in/joseph-edward-94b7a3322)
